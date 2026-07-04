@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFI OSS Portal</title>
+    <style>
+        :root {
+            --bg-charcoal: #1A1A1A;
+            --surface-neutral: #2C2C2C;
+            --bfi-green: #2E7D32;
+            --bfi-gold: #D4AF37;
+            --warning-yellow: #FFB800;
+            --info-blue: #4D9DE0;
+            --alert-red: #F44336;
+            --text-white: #FFFFFF;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-charcoal); color: var(--text-white); margin: 0; padding: 20px; display: flex; flex-direction: column; min-height: 100vh; }
+        .container { max-width: 720px; margin: 0 auto; flex: 1; width: 100%; }
+        
+        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-container img { width: 180px; height: auto; display: block; margin: 0 auto; }
+
+        .card { background-color: var(--surface-neutral); padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--bfi-gold); }
+        .nav-btn { box-sizing: border-box; cursor: pointer; display: block; width: 100%; padding: 15px; margin: 10px 0; background-color: var(--surface-neutral); color: var(--bfi-gold); border: 1px solid var(--bfi-gold); text-align: center; border-radius: 4px; font-weight: bold; }
+        
+        /* Input & Dropdown Styling */
+        input, select { width: 100%; height: 48px; background: #333; border: 1px solid #444; color: white; padding: 0 15px; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
+        
+        /* File Input Specific Styling */
+        input[type="file"] { padding-top: 11px; cursor: pointer; color: #ccc; }
+        input[type="file"]::file-selector-button { background-color: #555; color: white; border: none; padding: 6px 12px; border-radius: 4px; margin-right: 15px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-weight: bold; transition: 0.2s; }
+        input[type="file"]::file-selector-button:hover { background-color: var(--bfi-gold); color: black; }
+
+        /* Textarea Specific Styling */
+        textarea { width: 100%; height: 100px; background: #333; border: 1px solid #444; color: white; padding: 15px; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; resize: none; font-family: inherit; }
+        
+        button { box-sizing: border-box; width: 100%; padding: 15px; margin-top: 10px; background-color: var(--bfi-green); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .hidden { display: none; }
+        h1, h2, h3 { color: var(--bfi-gold); margin: 0; }
+        
+        /* Dashboard Stats */
+        .record-group { background: #333; padding: 15px; border-radius: 4px; margin-top: 15px; }
+        .record-group h4 { color: var(--bfi-green); margin-top: 0; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #444; font-size: 16px; }
+        .record-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; align-items: flex-start; }
+        .record-item:last-child { margin-bottom: 0; }
+        .record-label { color: #ccc; padding-right: 10px; }
+        .record-value { font-weight: bold; text-align: right; }
+        .record-value small { display: block; font-weight: normal; color: #aaa; font-size: 12px; margin-top: 2px; }
+        
+        /* Export Button */
+        .export-btn { box-sizing: border-box; width: 100%; padding: 10px; margin-top: 10px; background-color: transparent; color: var(--bfi-gold); border: 1px solid var(--bfi-gold); border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
+        .export-btn:hover { background-color: var(--bfi-gold); color: black; }
+        
+        /* Summary Metrics Grid */
+        .stats-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .stat-box { flex: 1; min-width: 65px; background: #222; padding: 10px 5px; text-align: center; border-radius: 4px; border: 1px solid #333; }
+        .stat-num { font-size: 18px; font-weight: bold; color: white; margin-bottom: 3px; }
+        .stat-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.1; }
+
+        /* History List Styling */
+        .history-year { color: var(--bfi-gold); margin-top: 20px; border-bottom: 1px solid #444; padding-bottom: 5px; font-size: 18px; font-weight: bold; }
+        .history-month { color: var(--bfi-green); margin-top: 15px; margin-bottom: 10px; font-size: 15px; font-weight: bold; text-transform: uppercase; }
+        .history-card { background: #333; padding: 12px; border-radius: 4px; margin-bottom: 8px; transition: 0.2s; }
+        .history-card.walkabout { border-left: 3px solid var(--bfi-gold); }
+        .history-card.care { border-left: 3px solid var(--bfi-green); }
+        .history-card.rejected { border-left: 3px solid var(--alert-red); cursor: pointer; }
+        .history-card.rejected:hover { background: #3a3a3a; }
+
+        /* Status Badges */
+        .status-badge { font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .status-pending { background-color: rgba(255, 184, 0, 0.1); color: var(--warning-yellow); border: 1px solid var(--warning-yellow); }
+        .status-followup { background-color: rgba(77, 157, 224, 0.1); color: var(--info-blue); border: 1px solid var(--info-blue); }
+        .status-closed { background-color: rgba(46, 125, 50, 0.1); color: var(--bfi-green); border: 1px solid var(--bfi-green); }
+        .status-rejected { background-color: rgba(244, 67, 54, 0.1); color: var(--alert-red); border: 1px solid var(--alert-red); }
+
+        /* Rejection Details Drawer */
+        .rejection-details { margin-top: 10px; padding-top: 10px; border-top: 1px solid #555; font-size: 13px; color: #ffcccc; display: none; }
+
+        footer { text-align: center; font-size: 12px; color: #666; margin-top: 20px; }
+
+        /* Tablet */
+        @media (max-width: 768px) {
+            .container { max-width: 100%; padding: 0 8px; }
+            .stat-box { min-width: 80px; }
+            .card { padding: 16px; }
+            .logo-container img { width: 150px; }
+            h1 { font-size: 24px; }
+            h2 { font-size: 20px; }
+        }
+
+        /* Phone */
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { padding: 0; }
+            .card { padding: 12px; border-left-width: 3px; border-radius: 6px; }
+            .logo-container img { width: 130px; }
+            .logo-container { margin-bottom: 14px; }
+            h1 { font-size: 20px; }
+            h2 { font-size: 18px; }
+            h3 { font-size: 15px; }
+            input, select { height: 44px; font-size: 14px; }
+            button, .nav-btn { padding: 13px; font-size: 14px; }
+            .record-item { flex-direction: column; gap: 2px; }
+            .record-value { text-align: left; }
+            .record-value small { margin-top: 0; }
+            .stats-grid { gap: 5px; }
+            .stat-box { min-width: 45%; padding: 8px 4px; }
+            .stat-num { font-size: 16px; }
+            .stat-label { font-size: 9px; }
+            .history-year { font-size: 16px; }
+            .history-month { font-size: 13px; }
+            .history-card { padding: 10px; }
+            .history-card > div:first-child { flex-direction: column; gap: 4px; }
+            .status-badge { font-size: 9px; padding: 2px 5px; }
+            textarea { height: 80px; font-size: 14px; }
+            .export-btn { padding: 8px; }
+            footer { font-size: 10px; }
+            .rejection-details { font-size: 12px; }
+        }
+
+        /* Phone landscape / small tablets */
+        @media (min-width: 481px) and (max-width: 600px) {
+            .stat-box { min-width: 42%; }
+        }
+
+        /* Large desktop */
+        @media (min-width: 1024px) {
+            .container { max-width: 800px; }
+            .card { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo-container">
+        <img src="Page04-BFILogo.png" alt="BFI Logo" onerror="this.style.display='none'">
+    </div>
+
+    <!-- Auth -->
+    <div id="auth-view" class="card">
+        <h1 style="text-align: center;">BFI OSS Portal</h1>
+        <input type="text" id="idInput" placeholder="Enter ID (e.g., BFI321) or Full Name">
+        <p id="loginError" class="hidden" style="color: #ff6b6b; font-size: 13px; margin-top: -5px; margin-bottom: 10px;"></p>
+        <button onclick="performLogin()">Sign In</button>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboard-page" class="hidden">
+        <div class="card">
+            <div class="tag" id="userTag" style="font-size: 12px; color: var(--bfi-gold); text-transform: uppercase;">Dashboard</div>
+            <h2 id="welcomeText" style="margin-bottom: 5px;">Welcome</h2>
+            <div id="clockDisplay" style="font-size: 13px; color: #aaa; margin-bottom: 15px;"></div>
+            <h3>Your Safety Records</h3>
+            
+            <div id="recordsContent"></div>
+            <div id="exportContent" style="margin-top: 15px;"></div>
+            
+            <hr style="margin: 20px 0; border-color: #444;">
+
+            <div style="background:#222; padding:15px; border-radius:6px; border-left:4px solid var(--bfi-gold); margin-bottom:20px;">
+                <h3 style="font-size:14px; margin-bottom:8px;">About This Portal</h3>
+                <p style="font-size:12px; color:#ccc; line-height:1.6; margin:0 0 6px 0;">The <strong style="color:var(--bfi-gold);">BFI Occupational Safety &amp; Security (OSS) Portal</strong> is a centralized platform for managing and tracking workplace safety records.</p>
+                <p style="font-size:12px; color:#ccc; line-height:1.6; margin:0 0 6px 0;">Employees log in with their BFI/BRE/EXP ID to view their <strong style="color:var(--bfi-gold);">CARE Card</strong> submissions and <strong style="color:var(--bfi-gold);">Daily Walkabout</strong> records.</p>
+                <p style="font-size:12px; color:#888; line-height:1.6; margin:0; font-style:italic;">All dates in DD/MM/YYYY &middot; All times in 24-hour HH:MM</p>
+            </div>
+
+            <div class="nav-btn" id="walkBtn" onclick="showPage('walkabout')">Go to Daily Walkabout</div>
+            <div class="nav-btn" onclick="showPage('care')">Go to CARE Card</div>
+            <hr style="margin: 20px 0; border-color: #444;">
+            <button style="background:var(--alert-red); margin-top: 0;" onclick="signOut()">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- Walkabout Page -->
+    <div id="walkabout-page" class="hidden">
+        <div class="card">
+            <h2 style="margin-bottom: 15px;">Walkabout Records</h2>
+            <button style="background:#444; margin-bottom: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+            <div id="walkabout-history-list"></div>
+            <button style="background:#444; margin-top: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <!-- CARE Card Page -->
+    <div id="care-page" class="hidden">
+        <div class="card">
+            <h2 style="margin-bottom: 15px;">CARE Card Records</h2>
+            
+            <!-- Dynamic Stats Container -->
+            <div id="care-stats-container"></div>
+            
+            <button onclick="toggleSection('care-submit')" style="margin-bottom: 10px;">+ Submit New Card</button>
+            <button style="background:#444; margin-bottom: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+
+            <!-- Submission Form -->
+            <div id="care-submit" class="hidden" style="background: #222; padding: 15px; border-radius: 8px; border: 1px solid #444; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 10px; font-size: 16px;">New Submission</h3>
+                <select><option>Intervene</option><option>Prevent Unsafe Act</option><option>Prevent Unsafe Condition</option><option>Suggestion</option></select>
+                <select><option>Urea Plant</option><option>Ammonia Plant</option><option>Utilities Area</option><option>Storage & Loading</option></select>
+                
+                <input type="file" accept="image/*">
+                <textarea placeholder="Observation details..."></textarea>
+                <button onclick="alert('Submitted successfully!'); toggleSection('care-submit');">Submit Card</button>
+            </div>
+
+            <div id="care-history-list"></div>
+            <button style="background:#444; margin-top: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+        </div>
+    </div>
+</div>
+
+<footer>&copy; 2026 Brunei Fertilizer Industries. All rights reserved.<br><span style="font-size: 10px; color: #555;">All dates in DD/MM/YYYY format &middot; All times in 24-hour HH:MM format</span></footer>
+
+<script src="data.js"></script>
+<script>
+    let loggedIn = false;
+    let loggedInId = '';
+
+    const mockWalkaboutData = [
+        { date: '2026-07-03', dateStr: '03/07/2026', day: 'Friday' },
+        { date: '2026-06-28', dateStr: '28/06/2026', day: 'Sunday' },
+        { date: '2026-06-15', dateStr: '15/06/2026', day: 'Monday' },
+        { date: '2025-12-10', dateStr: '10/12/2025', day: 'Wednesday' },
+        { date: '2025-11-05', dateStr: '05/11/2025', day: 'Wednesday' }
+    ];
+
+    const mockCareData = [];
+
+    function performLogin() {
+        const rawInput = document.getElementById('idInput').value.trim();
+        const rawId = rawInput.toUpperCase();
+        const idPattern = /^(BFI|BRE|EXP|INT|IR|C)(\d+)$/;
+        const match = rawId.match(idPattern);
+        const errorMsg = document.getElementById('loginError');
+
+        // Try matching by ID pattern, BRE number, or full name
+        let found = false;
+        let loginKey = '';
+
+        if (match && parseInt(match[2], 10) > 0) {
+            loginKey = rawId;
+            found = mockCareData.some(c => c.bfiNumber.toUpperCase() === rawId);
+        } else if (/^\d+$/.test(rawInput)) {
+            loginKey = rawInput;
+            found = mockCareData.some(c => c.bfiNumber === rawInput);
+        } else if (rawInput.length > 0) {
+            loginKey = rawInput;
+            found = mockCareData.some(c => c.employee.toUpperCase() === rawId);
+        }
+
+        if (found) {
+            loggedIn = true;
+            loggedInId = loginKey;
+            errorMsg.classList.add('hidden');
+            showPage('dashboard');
+        } else {
+            errorMsg.innerText = "No records found for this ID or name. Try BFI/BRE/EXP number or your full name.";
+            errorMsg.classList.remove('hidden');
+        }
+    }
+
+    function toggleSection(id) {
+        const el = document.getElementById(id);
+        el.classList.toggle('hidden');
+    }
+
+    function toggleRejectionReason(id) {
+        const el = document.getElementById(id);
+        if (el.style.display === 'block') {
+            el.style.display = 'none';
+        } else {
+            el.style.display = 'block';
+        }
+    }
+
+    function signOut() {
+        loggedIn = false;
+        loggedInId = '';
+        document.getElementById('idInput').value = '';
+        document.getElementById('auth-view').classList.remove('hidden');
+        document.getElementById('dashboard-page').classList.add('hidden');
+        document.getElementById('walkabout-page').classList.add('hidden');
+        document.getElementById('care-page').classList.add('hidden');
+        if (clockInterval) clearInterval(clockInterval);
+    }
+
+    let clockInterval = null;
+
+    function updateClock() {
+        const el = document.getElementById('clockDisplay');
+        if (!el) return;
+        const now = new Date();
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const m = months[now.getMonth()];
+        const y = now.getFullYear();
+        const h = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        el.innerHTML = `Month: ${m} &middot; Year: ${y} &middot; ${h}:${min}:<span style="color: var(--bfi-gold);">${s}</span>`;
+    }
+
+    function renderHistory(data, containerId, isCareCard) {
+        const container = document.getElementById(containerId);
+        let html = '';
+        let currentYear = null;
+        let currentMonth = null;
+
+        const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if(sortedData.length === 0) {
+            container.innerHTML = `<p style="color: #888; text-align: center; font-style: italic;">No records found.</p>`;
+            return;
+        }
+
+        sortedData.forEach((item, index) => {
+            const d = new Date(item.date);
+            const year = d.getFullYear();
+            const month = d.toLocaleString('default', { month: 'long' });
+
+            if (year !== currentYear) {
+                html += `<div class="history-year">${year}</div>`;
+                currentYear = year;
+                currentMonth = null;
+            }
+            if (month !== currentMonth) {
+                html += `<div class="history-month">${month}</div>`;
+                currentMonth = month;
+            }
+
+            if(isCareCard) {
+                let badgeClass = '';
+                let cardClasses = 'history-card care';
+                let extraHtml = '';
+                let onClickAction = '';
+                let tapPrompt = '';
+
+                if(item.status === 'Pending Review') {
+                    badgeClass = 'status-pending';
+                } else if(item.status === 'Being Followed Up') {
+                    badgeClass = 'status-followup';
+                } else if(item.status === 'Rejected') {
+                    badgeClass = 'status-rejected';
+                    cardClasses = 'history-card rejected'; 
+                    onClickAction = `onclick="toggleRejectionReason('reason-${index}')"`;
+                    tapPrompt = `<div style="font-size: 10px; color: var(--alert-red); margin-top: 4px; font-style: italic;">(Tap for details)</div>`;
+                    extraHtml = `
+                        <div id="reason-${index}" class="rejection-details">
+                            <strong>Reason for Rejection:</strong><br>
+                            ${item.reason}
+                        </div>
+                    `;
+                } else {
+                    badgeClass = 'status-closed';
+                }
+
+                const companyHtml = item.staffType === 'Contractor' && item.company ? `<span style="font-size: 12px; color: #999;">Company: ${item.company}</span>` : '';
+
+                html += `
+                <div class="${cardClasses}" ${onClickAction}>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-weight: bold; color: white;">${item.type}</span>
+                        <span style="color: #aaa; font-size: 12px;">${item.dateStr} (${item.day})</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 12px; color: #ccc;">Location: ${item.location}</span>
+                            ${companyHtml}
+                            ${tapPrompt}
+                        </div>
+                        <span class="status-badge ${badgeClass}">${item.status}</span>
+                    </div>
+                    ${extraHtml}
+                </div>`;
+            } else {
+                html += `
+                <div class="history-card walkabout">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-weight: bold; color: white;">Attendance Verified</span>
+                        <span style="color: #aaa; font-size: 12px;">${item.dateStr} (${item.day})</span>
+                    </div>
+                </div>`;
+            }
+        });
+
+        container.innerHTML = html;
+    }
+
+    function showPage(page) {
+        if(!loggedIn && page !== 'login') return;
+
+        document.getElementById('auth-view').classList.add('hidden');
+        document.getElementById('dashboard-page').classList.add('hidden');
+        document.getElementById('walkabout-page').classList.add('hidden');
+        document.getElementById('care-page').classList.add('hidden');
+
+        if(page === 'dashboard') {
+            document.getElementById('dashboard-page').classList.remove('hidden');
+            if (clockInterval) clearInterval(clockInterval);
+            updateClock();
+            clockInterval = setInterval(updateClock, 1000);
+            const id = document.getElementById('idInput').value.toUpperCase();
+            
+            document.getElementById('userTag').innerText = "Account ID: " + id;
+            const firstRecord = mockCareData.find(c => c.bfiNumber.toUpperCase() === id || c.employee.toUpperCase() === id);
+            const displayName = firstRecord && firstRecord.employee !== '[List]' ? firstRecord.employee : id;
+            const displayExtra = firstRecord ? (firstRecord.company ? `${firstRecord.position} - ${firstRecord.company}` : firstRecord.position) : '';
+            document.getElementById('welcomeText').innerHTML = `Welcome, ${displayName}${displayExtra ? `<br><span style="font-size:13px;color:#999;font-weight:normal;">${displayExtra}</span>` : ''}`;
+            
+            const recordsContent = document.getElementById('recordsContent');
+            const exportContent = document.getElementById('exportContent');
+            
+            const userData = mockCareData.filter(c => c.bfiNumber.toUpperCase() === loggedInId || c.employee.toUpperCase() === loggedInId);
+            
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            const monthRecords = userData.filter(c => {
+                const d = new Date(c.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            const yearRecords = userData.filter(c => {
+                const d = new Date(c.date);
+                return d.getFullYear() === currentYear;
+            });
+            
+            const sortedByDate = [...userData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const last = sortedByDate[0] || { type: '-', dateStr: '-', day: '-' };
+            
+            const careHtml = `
+                <div class="record-group">
+                    <h4>CARE Cards</h4>
+                    <div class="record-item"><span class="record-label">Total Submitted (All Time Records)</span> <span class="record-value">${userData.length}</span></div>
+                    <div class="record-item"><span class="record-label">Sub-Total For The Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${monthRecords.length}</span></div>
+                    <div class="record-item"><span class="record-label">Total For The Year (${currentYear})</span> <span class="record-value">${yearRecords.length} / 12</span></div>
+                    <div class="record-item"><span class="record-label">Last Submission</span> <span class="record-value">${last.type}<small>${last.dateStr}, ${last.day}</small></span></div>
+                </div>
+            `;
+            
+            const walkMonthRecords = mockWalkaboutData.filter(c => {
+                const d = new Date(c.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            const walkYearRecords = mockWalkaboutData.filter(c => {
+                const d = new Date(c.date);
+                return d.getFullYear() === currentYear;
+            });
+            const walkSorted = [...mockWalkaboutData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const walkLast = walkSorted[0] || { dateStr: '-', day: '-' };
+
+            const walkaboutHtml = `
+                <div class="record-group">
+                    <h4>Walkabouts</h4>
+                    <div class="record-item"><span class="record-label">Total Joined (All Time Records)</span> <span class="record-value">${mockWalkaboutData.length}</span></div>
+                    <div class="record-item"><span class="record-label">Sub-Total For The Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${walkMonthRecords.length}</span></div>
+                    <div class="record-item"><span class="record-label">Total For The Year (${currentYear})</span> <span class="record-value">${walkYearRecords.length} / 12</span></div>
+                    <div class="record-item"><span class="record-label">Last Joined</span> <span class="record-value">${walkLast.dateStr}, ${walkLast.day}</span></div>
+                </div>
+            `;
+
+            if (!id.startsWith('C')) {
+                recordsContent.innerHTML = careHtml + walkaboutHtml;
+                exportContent.innerHTML = `
+                    <button class="export-btn" onclick="exportPDF('both')">Export Both Records (PDF)</button>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="export-btn" style="margin-top: 0; flex: 1;" onclick="exportPDF('care')">Export CARE Cards</button>
+                        <button class="export-btn" style="margin-top: 0; flex: 1;" onclick="exportPDF('walkabout')">Export Walkabouts</button>
+                    </div>
+                `;
+                document.getElementById('walkBtn').classList.remove('hidden');
+            } else {
+                recordsContent.innerHTML = careHtml;
+                exportContent.innerHTML = `
+                    <button class="export-btn" onclick="exportPDF('care')">Export CARE Cards Only (PDF)</button>
+                `;
+                document.getElementById('walkBtn').classList.add('hidden');
+            }
+        } else if (page === 'walkabout') {
+            renderHistory(mockWalkaboutData, 'walkabout-history-list', false);
+            document.getElementById('walkabout-page').classList.remove('hidden');
+            
+        } else if (page === 'care') {
+            document.getElementById('care-submit').classList.add('hidden');
+            
+            const userData = mockCareData.filter(c => c.bfiNumber.toUpperCase() === loggedInId || c.employee.toUpperCase() === loggedInId);
+            
+            // Generate Care Stats
+            const total = userData.length;
+            const closed = userData.filter(c => c.status === 'Closed').length;
+            const followup = userData.filter(c => c.status === 'Being Followed Up').length;
+            const pending = userData.filter(c => c.status === 'Pending Review').length;
+            const rejected = userData.filter(c => c.status === 'Rejected').length;
+
+            document.getElementById('care-stats-container').innerHTML = `
+                <div class="stat-box" style="border-top: 3px solid var(--bfi-gold); margin-bottom: 10px; padding: 15px; background: #2A2A2A;">
+                    <div class="stat-num" style="font-size: 26px; color: var(--bfi-gold);">${total}</div>
+                    <div class="stat-label" style="font-size: 12px; font-weight: bold;">Total CARE Cards Submitted</div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box" style="border-top: 3px solid var(--bfi-green);">
+                        <div class="stat-num">${closed}</div>
+                        <div class="stat-label">Closed</div>
+                    </div>
+                    <div class="stat-box" style="border-top: 3px solid var(--info-blue);">
+                        <div class="stat-num">${followup}</div>
+                        <div class="stat-label">Follow Up</div>
+                    </div>
+                    <div class="stat-box" style="border-top: 3px solid var(--warning-yellow);">
+                        <div class="stat-num">${pending}</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-box" style="border-top: 3px solid var(--alert-red);">
+                        <div class="stat-num">${rejected}</div>
+                        <div class="stat-label">Rejected</div>
+                    </div>
+                </div>
+            `;
+
+            renderHistory(userData, 'care-history-list', true);
+            document.getElementById('care-page').classList.remove('hidden');
+        }
+    }
+
+    function exportPDF(type) {
+        const typeNames = {'both': 'CARE Cards and Walkabout', 'care': 'CARE Cards', 'walkabout': 'Walkabout'};
+        alert(`Generating PDF for: ${typeNames[type]} records...`);
+    }
+</script>
+</body>
+</html>
