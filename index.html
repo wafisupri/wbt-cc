@@ -1,2 +1,835 @@
-<![CDATA[
-]]>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFI OSS Portal</title>
+    <style>
+        :root {
+            --bg-charcoal: #1A1A1A;
+            --surface-neutral: #2C2C2C;
+            --bfi-green: #2E7D32;
+            --bfi-gold: #D4AF37;
+            --warning-yellow: #FFB800;
+            --info-blue: #4D9DE0;
+            --alert-red: #F44336;
+            --text-white: #FFFFFF;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-charcoal); color: var(--text-white); margin: 0; padding: 20px; display: flex; flex-direction: column; min-height: 100vh; }
+        .container { max-width: 720px; margin: 0 auto; flex: 1; width: 100%; }
+        
+        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-container img { width: 180px; height: auto; display: block; margin: 0 auto; }
+
+        .card { background-color: var(--surface-neutral); padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--bfi-gold); }
+        button, .nav-btn, .export-btn { box-sizing: border-box; width: 100%; padding: 10px; font-size: 13px; font-weight: bold; cursor: pointer; border-radius: 4px; line-height: 1.2; }
+        button { margin-top: 10px; background-color: var(--bfi-green); color: white; border: none; }
+        .nav-btn { display: block; margin: 10px 0; background-color: var(--surface-neutral); color: var(--bfi-gold); border: 1px solid var(--bfi-gold); text-align: center; }
+        .export-btn { margin-top: 10px; background-color: transparent; color: var(--bfi-gold); border: 1px solid var(--bfi-gold); transition: 0.2s; }
+        input, select { width: 100%; height: 48px; background: #333; border: 1px solid #444; color: white; padding: 0 15px; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
+        
+        /* File Input Specific Styling */
+        input[type="file"] { padding-top: 11px; cursor: pointer; color: #ccc; }
+        input[type="file"]::file-selector-button { background-color: #555; color: white; border: none; padding: 6px 12px; border-radius: 4px; margin-right: 15px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-weight: bold; transition: 0.2s; }
+        input[type="file"]::file-selector-button:hover { background-color: var(--bfi-gold); color: black; }
+
+        /* Textarea Specific Styling */
+        textarea { width: 100%; height: 100px; background: #333; border: 1px solid #444; color: white; padding: 15px; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; resize: none; font-family: inherit; }
+        
+        .hidden { display: none; }
+        h1, h2, h3 { color: var(--bfi-gold); margin: 0; }
+        
+        /* Dashboard Stats */
+        .record-group { background: #333; padding: 15px; border-radius: 4px; margin-top: 15px; }
+        .record-group h4 { color: var(--bfi-green); margin-top: 0; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #444; font-size: 16px; }
+        .record-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; align-items: flex-start; }
+        .record-item:last-child { margin-bottom: 0; }
+        .record-label { color: #ccc; padding-right: 10px; }
+        .record-value { font-weight: bold; text-align: right; }
+        .record-value small { display: block; font-weight: normal; color: #aaa; font-size: 12px; margin-top: 2px; }
+        
+        /* Summary Metrics Grid */
+        .stats-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .stat-box { flex: 1; min-width: 65px; background: #222; padding: 10px 5px; text-align: center; border-radius: 4px; border: 1px solid #333; }
+        .stat-num { font-size: 18px; font-weight: bold; color: white; margin-bottom: 3px; }
+        .stat-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.1; }
+
+        /* Contribution Graph (GitHub-style activity heatmap) */
+        .contrib-card { overflow: hidden; }
+        .contrib-scroll { overflow-x: auto; padding-bottom: 4px; }
+        .contrib-inner { display: inline-block; min-width: 100%; }
+        .contrib-months { display: grid; grid-template-columns: repeat(53, 11px); gap: 3px; margin-left: 28px; height: 14px; margin-bottom: 4px; }
+        .contrib-month-label { font-size: 10px; color: #888; white-space: nowrap; }
+        .contrib-body { display: flex; align-items: flex-start; }
+        .contrib-daylabels { position: relative; width: 22px; height: 95px; margin-right: 6px; flex-shrink: 0; }
+        .contrib-daylabels span { position: absolute; font-size: 9px; color: #888; line-height: 11px; }
+        .contrib-graph { display: grid; grid-template-columns: repeat(53, 11px); grid-template-rows: repeat(7, 11px); grid-auto-flow: column; gap: 3px; }
+        .contrib-cell { width: 11px; height: 11px; border-radius: 2px; background: #2c2c2c; }
+        .contrib-cell.contrib-empty { background: transparent; }
+        .contrib-level-0 { background: #2c2c2c; }
+        .contrib-level-1 { background: rgba(46, 125, 50, 0.35); }
+        .contrib-level-2 { background: rgba(46, 125, 50, 0.6); }
+        .contrib-level-3 { background: rgba(46, 125, 50, 0.85); }
+        .contrib-level-4 { background: #4CAF50; }
+        .contrib-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: #888; flex-wrap: wrap; gap: 8px; }
+        .contrib-legend { display: flex; align-items: center; gap: 3px; }
+        .contrib-legend .contrib-cell { display: inline-block; }
+        @media (max-width: 480px) {
+            .contrib-months { grid-template-columns: repeat(53, 8px); margin-left: 20px; }
+            .contrib-graph { grid-template-columns: repeat(53, 8px); grid-template-rows: repeat(7, 8px); }
+            .contrib-cell { width: 8px; height: 8px; }
+            .contrib-daylabels { width: 16px; height: 68px; }
+        }
+
+        /* History List Styling */
+        .history-year { color: var(--bfi-gold); margin-top: 20px; border-bottom: 1px solid #444; padding-bottom: 5px; font-size: 18px; font-weight: bold; }
+        .history-month { color: var(--bfi-green); margin-top: 15px; margin-bottom: 10px; font-size: 15px; font-weight: bold; text-transform: uppercase; }
+        .history-card { background: #333; padding: 12px; border-radius: 4px; margin-bottom: 8px; transition: 0.2s; }
+        .history-card.walkabout { border-left: 3px solid var(--bfi-gold); }
+        .history-card.care { border-left: 3px solid var(--bfi-green); }
+        .history-card.rejected { border-left: 3px solid var(--alert-red); cursor: pointer; }
+        .history-card.rejected:hover { background: #3a3a3a; }
+
+        /* Status Badges */
+        .status-badge { font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .status-pending { background-color: rgba(255, 184, 0, 0.1); color: var(--warning-yellow); border: 1px solid var(--warning-yellow); }
+        .status-followup { background-color: rgba(77, 157, 224, 0.1); color: var(--info-blue); border: 1px solid var(--info-blue); }
+        .status-closed { background-color: rgba(46, 125, 50, 0.1); color: var(--bfi-green); border: 1px solid var(--bfi-green); }
+        .status-rejected { background-color: rgba(244, 67, 54, 0.1); color: var(--alert-red); border: 1px solid var(--alert-red); }
+
+        /* Rejection Details Drawer */
+        .rejection-details { margin-top: 10px; padding-top: 10px; border-top: 1px solid #555; font-size: 13px; color: #ffcccc; display: none; }
+
+        footer { text-align: center; font-size: 12px; color: #666; margin-top: 20px; }
+
+        /* Tablet */
+        @media (max-width: 768px) {
+            .container { max-width: 100%; padding: 0 8px; }
+            .stat-box { min-width: 80px; }
+            .card { padding: 16px; }
+            .logo-container img { width: 150px; }
+            h1 { font-size: 24px; }
+            h2 { font-size: 20px; }
+        }
+
+        /* Phone */
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { padding: 0; }
+            .card { padding: 12px; border-left-width: 3px; border-radius: 6px; }
+            .logo-container img { width: 130px; }
+            .logo-container { margin-bottom: 14px; }
+            h1 { font-size: 20px; }
+            h2 { font-size: 18px; }
+            h3 { font-size: 15px; }
+            input, select { height: 44px; font-size: 14px; }
+            button, .nav-btn, .export-btn { padding: 8px; font-size: 13px; }
+            .record-item { flex-direction: column; gap: 2px; }
+            .record-value { text-align: left; }
+            .record-value small { margin-top: 0; }
+            .stats-grid { gap: 5px; }
+            .stat-box { min-width: 45%; padding: 8px 4px; }
+            .stat-num { font-size: 16px; }
+            .stat-label { font-size: 9px; }
+            .history-year { font-size: 16px; }
+            .history-month { font-size: 13px; }
+            .history-card { padding: 10px; }
+            .history-card > div:first-child { flex-direction: column; gap: 4px; }
+            .status-badge { font-size: 9px; padding: 2px 5px; }
+            textarea { height: 80px; font-size: 14px; }
+            footer { font-size: 10px; }
+            .rejection-details { font-size: 12px; }
+        }
+
+        /* Phone landscape / small tablets */
+        @media (min-width: 481px) and (max-width: 600px) {
+            .stat-box { min-width: 42%; }
+        }
+
+/* Large desktop */
+        @media (min-width: 1024px) {
+            .container { max-width: 800px; }
+            .card { padding: 24px; }
+        }
+
+        /* Print / PDF Export */
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; box-sizing: border-box; }
+            .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #D4AF37; padding-bottom: 10px; }
+            .print-header h1 { color: #D4AF37; margin: 0; font-size: 22px; }
+            .print-header p { margin: 4px 0; font-size: 12px; color: #333; }
+            .print-table { width: 100%; border-collapse: collapse; font-size: 11px; page-break-inside: auto; }
+            .print-table th { background: #D4AF37; color: black; padding: 6px 4px; text-align: left; font-size: 10px; }
+            .print-table td { padding: 4px; border-bottom: 1px solid #ccc; vertical-align: top; }
+            .print-table tr { page-break-inside: avoid; }
+            .print-section-title { color: #2E7D32; font-size: 16px; margin: 20px 0 8px 0; border-bottom: 1px solid #2E7D32; padding-bottom: 4px; }
+            .print-footer { text-align: center; font-size: 10px; color: #999; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo-container">
+        <img src="Page04-BFILogo.png" alt="BFI Logo" onerror="this.style.display='none'">
+    </div>
+
+    <!-- Auth -->
+    <div id="auth-view" class="card">
+        <h1 style="text-align: center;">BFI OSS Portal</h1>
+        <input type="text" id="idInput" placeholder="Enter ID or full name (e.g., BFI001, EXP005, BRE12000073, C12000073)" onkeydown="if(event.key==='Enter')performLogin()">
+        <div style="font-size:11px;color:#888;margin:-5px 0 10px 0;text-align:center;line-height:1.6;">
+            BFI (local staff) 001–388 &nbsp;|&nbsp; EXP (expat staff) 005–197 &nbsp;|&nbsp; BRE (business partner) 1–120000080 &nbsp;|&nbsp; C (contractor) 1–120000080 or full name
+        </div>
+        <p id="loginError" class="hidden" style="color: #ff6b6b; font-size: 13px; margin-top: -5px; margin-bottom: 10px;"></p>
+        <button onclick="performLogin()">Sign In</button>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboard-page" class="hidden">
+        <div class="card">
+            <div class="tag" id="userTag" style="font-size: 12px; color: var(--bfi-gold); text-transform: uppercase;">Dashboard</div>
+            <h2 id="welcomeText" style="margin-bottom: 5px;">Welcome</h2>
+            <div id="clockDisplay" style="font-size: 13px; color: #aaa; margin-bottom: 15px;"></div>
+
+            <div style="background:#222; padding:15px; border-radius:6px; border-left:4px solid var(--bfi-gold); margin-bottom:20px;">
+                <h3 style="font-size:14px; margin-bottom:8px;">About This Portal</h3>
+                <p style="font-size:12px; color:#ccc; line-height:1.6; margin:0 0 6px 0;">The <strong style="color:var(--bfi-gold);">BFI Occupational Safety &amp; Security (OSS) Portal</strong> is a centralized platform for managing and tracking workplace safety records.</p>
+                <p style="font-size:12px; color:#ccc; line-height:1.6; margin:0 0 6px 0;">Employees log in with their BFI/EXP/BRE ID to view their <strong style="color:var(--bfi-gold);">CARE Card</strong> submissions and <strong style="color:var(--bfi-gold);">Daily Walkabout</strong> records.</p>
+                <p style="font-size:12px; color:#888; line-height:1.6; margin:0; font-style:italic;">All dates in DD/MM/YYYY &middot; All times in 24-hour HH:MM</p>
+            </div>
+
+            <h3>Your Safety Records</h3>
+            
+            <div id="recordsContent"></div>
+            <div id="exportContent" style="margin-top: 15px;"></div>
+            <div id="contribution-container" style="margin-top: 20px;"></div>
+
+            <hr style="margin: 20px 0; border-color: #444;">
+
+            <div class="nav-btn" id="walkBtn" onclick="showPage('walkabout')">Go to Daily Walkabout</div>
+            <div class="nav-btn" onclick="showPage('care')">Go to CARE Card</div>
+            <hr style="margin: 20px 0; border-color: #444;">
+            <button style="background:var(--alert-red); margin-top: 0;" onclick="signOut()">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- Walkabout Page -->
+    <div id="walkabout-page" class="hidden">
+        <div class="card">
+            <h2 style="margin-bottom: 15px;">Walkabout Records</h2>
+            <button style="background:#444; margin-bottom: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+            <input type="text" id="walkaboutFilter" placeholder="Filter by location, date..." oninput="showPage('walkabout')" style="margin-bottom:10px;">
+            <div id="walkabout-history-list"></div>
+            <button style="background:#444; margin-top: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <!-- CARE Card Page -->
+    <div id="care-page" class="hidden">
+        <div class="card">
+            <h2 style="margin-bottom: 15px;">CARE Card Records</h2>
+            
+            <!-- Dynamic Stats Container -->
+            <div id="care-stats-container"></div>
+            
+            <button onclick="toggleSection('care-submit')" style="margin-bottom: 10px;">+ Submit New Card</button>
+            <button style="background:#444; margin-bottom: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+
+            <input type="text" id="careFilter" placeholder="Filter by type, location, date..." oninput="showPage('care')" style="margin-bottom:10px;">
+
+
+            <!-- Submission Form -->
+            <div id="care-submit" class="hidden" style="background: #222; padding: 15px; border-radius: 8px; border: 1px solid #444; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 10px; font-size: 16px;">New Submission</h3>
+                <select><option>Intervene</option><option>Prevent Unsafe Act</option><option>Prevent Unsafe Condition</option><option>Suggestion</option></select>
+                <select><option>Urea Plant</option><option>Ammonia Plant</option><option>Utilities Area</option><option>Storage & Loading</option></select>
+                
+                <input type="file" accept="image/*">
+                <textarea placeholder="Observation details..."></textarea>
+                <button onclick="alert('Submitted successfully!'); toggleSection('care-submit');">Submit Card</button>
+            </div>
+
+            <div id="care-history-list"></div>
+            <button style="background:#444; margin-top: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+        </div>
+    </div>
+</div>
+
+<div id="printArea" style="display:none;"></div>
+
+<footer>&copy; 2026 Brunei Fertilizer Industries. All rights reserved.<br><span style="font-size: 10px; color: #555;">All dates in DD/MM/YYYY format &middot; All times in 24-hour HH:MM format</span></footer>
+
+<script src="data.js"></script>
+<script>
+    let loggedIn = false;
+    let loggedInId = '';
+
+    
+
+    function performLogin() {
+        const rawInput = document.getElementById('idInput').value.trim();
+        const rawId = rawInput.toUpperCase();
+        const idPattern = /^(BFI|BRE|EXP|INT|IR|C)(\d+)$/;
+        const match = rawId.match(idPattern);
+        const errorMsg = document.getElementById('loginError');
+
+        let loginKey = '';
+        let found = false;
+
+        // Strategy 1: ID pattern match (BFI/EXP/BRE/INT/IR/C + digits)
+        if (match && parseInt(match[2], 10) > 0) {
+            loginKey = rawId;
+            found = mockCareData.some(c => c.bfiNumber.toUpperCase() === rawId) ||
+                    mockWalkaboutData.some(c => c.bfiNumber.toUpperCase() === rawId);
+        }
+
+        // Strategy 2: Pure digits (BRE number, or C/BRE without prefix)
+        if (!found && /^\d+$/.test(rawInput)) {
+            loginKey = rawInput;
+            found = mockCareData.some(c => c.bfiNumber === rawInput) ||
+                    mockWalkaboutData.some(c => c.bfiNumber === rawInput) ||
+                    brePersonnel[rawInput] !== undefined;
+        }
+
+        // Strategy 3: Prefix-stripped match (BRE/C — stored as bare digits in data)
+        if (!found && match && (match[1] === 'C' || match[1] === 'BRE')) {
+            const stripped = match[2].replace(/^0+/, '') || match[2];
+            loginKey = rawId;
+            found = mockCareData.some(c => c.bfiNumber === stripped || c.bfiNumber === match[2]) ||
+                    mockWalkaboutData.some(c => c.bfiNumber === stripped || c.bfiNumber === match[2]);
+            if (!found && match[1] === 'C') {
+                // Accept C-prefix login even without matching records
+                found = true;
+                loginKey = match[2];
+            }
+            if (!found && match[1] === 'BRE' && brePersonnel[stripped]) {
+                // Accept BRE login if ID exists in personnel lookup
+                found = true;
+            }
+        }
+
+        // Strategy 4: Full name lookup
+        if (!found && rawInput.length > 0) {
+            loginKey = rawInput;
+            found = mockCareData.some(c => c.employee.toUpperCase() === rawId) ||
+                    mockWalkaboutData.some(c => c.employee.toUpperCase() === rawId);
+        }
+
+        if (found) {
+            loggedIn = true;
+            loggedInId = loginKey;
+            errorMsg.classList.add('hidden');
+            showPage('dashboard');
+        } else {
+            errorMsg.innerText = "No records found for this ID or name. Try BFI/EXP/BRE number or your full name.";
+            errorMsg.classList.remove('hidden');
+        }
+    }
+
+    function toggleSection(id) {
+        const el = document.getElementById(id);
+        el.classList.toggle('hidden');
+    }
+
+    function toggleRejectionReason(id) {
+        const el = document.getElementById(id);
+        if (el.style.display === 'block') {
+            el.style.display = 'none';
+        } else {
+            el.style.display = 'block';
+        }
+    }
+
+    function signOut() {
+        loggedIn = false;
+        loggedInId = '';
+        document.getElementById('idInput').value = '';
+        document.getElementById('auth-view').classList.remove('hidden');
+        document.getElementById('dashboard-page').classList.add('hidden');
+        document.getElementById('walkabout-page').classList.add('hidden');
+        document.getElementById('care-page').classList.add('hidden');
+        if (clockInterval) clearInterval(clockInterval);
+    }
+
+    let clockInterval = null;
+
+    function updateClock() {
+        const el = document.getElementById('clockDisplay');
+        if (!el) return;
+        const now = new Date();
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const m = months[now.getMonth()];
+        const y = now.getFullYear();
+        const h = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        el.innerHTML = `Month: ${m} &middot; Year: ${y} &middot; ${h}:${min}:<span style="color: var(--bfi-gold);">${s}</span>`;
+    }
+
+    function getContributionCounts(id) {
+        const careData = filterCareData(id);
+        const walkData = filterWalkData(id);
+        const counts = {};
+        [...careData, ...walkData].forEach(r => {
+            counts[r.date] = (counts[r.date] || 0) + 1;
+        });
+        return counts;
+    }
+
+    function renderContributionGraph(id) {
+        const counts = getContributionCounts(id);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Align the visible window to whole weeks (Sun-Sat), ending on the current week's Saturday
+        const endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+        const totalWeeks = 53;
+        const startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - (totalWeeks * 7 - 1));
+
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let cellsHtml = '';
+        let monthsHtml = '';
+        let lastMonth = -1;
+        let totalCount = 0;
+
+        for (let w = 0; w < totalWeeks; w++) {
+            const weekStart = new Date(startDate);
+            weekStart.setDate(weekStart.getDate() + w * 7);
+            if (weekStart.getMonth() !== lastMonth) {
+                lastMonth = weekStart.getMonth();
+                monthsHtml += `<div class="contrib-month-label" style="grid-column:${w + 1};">${monthNames[lastMonth]}</div>`;
+            }
+            for (let d = 0; d < 7; d++) {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(cellDate.getDate() + w * 7 + d);
+                if (cellDate > today) {
+                    cellsHtml += `<div class="contrib-cell contrib-empty"></div>`;
+                    continue;
+                }
+                const key = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, '0')}-${String(cellDate.getDate()).padStart(2, '0')}`;
+                const count = counts[key] || 0;
+                totalCount += count;
+                let level = 0;
+                if (count === 1) level = 1;
+                else if (count >= 2 && count <= 3) level = 2;
+                else if (count >= 4 && count <= 5) level = 3;
+                else if (count >= 6) level = 4;
+                const dateLabel = cellDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                const title = count === 0 ? `No submissions on ${dateLabel}` : `${count} submission${count > 1 ? 's' : ''} on ${dateLabel}`;
+                cellsHtml += `<div class="contrib-cell contrib-level-${level}" title="${title}"></div>`;
+            }
+        }
+
+        return `
+            <div class="record-group contrib-card">
+                <h4>Activity (Past Year)</h4>
+                <div class="contrib-scroll">
+                    <div class="contrib-inner">
+                        <div class="contrib-months">${monthsHtml}</div>
+                        <div class="contrib-body">
+                            <div class="contrib-daylabels">
+                                <span style="top:11px;">Mon</span>
+                                <span style="top:39px;">Wed</span>
+                                <span style="top:67px;">Fri</span>
+                            </div>
+                            <div class="contrib-graph">${cellsHtml}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contrib-footer">
+                    <span class="contrib-total">${totalCount} submission${totalCount === 1 ? '' : 's'} in the last year</span>
+                    <span class="contrib-legend">Less <span class="contrib-cell contrib-level-0"></span><span class="contrib-cell contrib-level-1"></span><span class="contrib-cell contrib-level-2"></span><span class="contrib-cell contrib-level-3"></span><span class="contrib-cell contrib-level-4"></span> More</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderHistory(data, containerId, isCareCard) {
+        const container = document.getElementById(containerId);
+        let html = '';
+        let currentYear = null;
+        let currentMonth = null;
+
+        const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if(sortedData.length === 0) {
+            container.innerHTML = `<p style="color: #888; text-align: center; font-style: italic;">No records found.</p>`;
+            return;
+        }
+
+        sortedData.forEach((item, index) => {
+            const d = new Date(item.date);
+            const year = d.getFullYear();
+            const month = d.toLocaleString('default', { month: 'long' });
+
+            if (year !== currentYear) {
+                html += `<div class="history-year">${year}</div>`;
+                currentYear = year;
+                currentMonth = null;
+            }
+            if (month !== currentMonth) {
+                html += `<div class="history-month">${month}</div>`;
+                currentMonth = month;
+            }
+
+            if(isCareCard) {
+                let badgeClass = '';
+                let cardClasses = 'history-card care';
+                let extraHtml = '';
+                let onClickAction = '';
+                let tapPrompt = '';
+
+                if(item.status === 'Pending Review') {
+                    badgeClass = 'status-pending';
+                } else if(item.status === 'Being Followed Up') {
+                    badgeClass = 'status-followup';
+                } else if(item.status === 'Rejected') {
+                    badgeClass = 'status-rejected';
+                    cardClasses = 'history-card rejected'; 
+                    onClickAction = `onclick="toggleRejectionReason('reason-${index}')"`;
+                    tapPrompt = `<div style="font-size: 10px; color: var(--alert-red); margin-top: 4px; font-style: italic;">(Tap for details)</div>`;
+                    extraHtml = `
+                        <div id="reason-${index}" class="rejection-details">
+                            <strong>Reason for Rejection:</strong><br>
+                            ${item.reason}
+                        </div>
+                    `;
+                } else {
+                    badgeClass = 'status-closed';
+                }
+
+                const companyHtml = item.staffType === 'Contractor' && item.company ? `<span style="font-size: 12px; color: #999;">Company: ${item.company}</span>` : '';
+
+                html += `
+                <div class="${cardClasses}" ${onClickAction}>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-weight: bold; color: white;">${item.type}</span>
+                        <span style="color: #aaa; font-size: 12px;">${item.dateStr} (${item.day})</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 12px; color: #ccc;">Location: ${item.location}</span>
+                            ${companyHtml}
+                            ${tapPrompt}
+                        </div>
+                        <span class="status-badge ${badgeClass}">${item.status}</span>
+                    </div>
+                    ${extraHtml}
+                </div>`;
+            } else {
+                const loc = item.location || '';
+                const sLoc = item.specificLocation || '';
+                const locHtml = sLoc ? `${loc} - ${sLoc}` : loc;
+                html += `
+                <div class="history-card walkabout">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-weight: bold; color: white;">Walkabout</span>
+                        <span style="color: #aaa; font-size: 12px;">${item.dateStr} (${item.day})</span>
+                    </div>
+                    ${locHtml ? `<div style="font-size: 12px; color: #ccc;">Location: ${locHtml}</div>` : ''}
+                </div>`;
+            }
+        });
+
+        container.innerHTML = html;
+    }
+
+    function showPage(page) {
+        if(!loggedIn && page !== 'login') return;
+
+        document.getElementById('auth-view').classList.add('hidden');
+        document.getElementById('dashboard-page').classList.add('hidden');
+        document.getElementById('walkabout-page').classList.add('hidden');
+        document.getElementById('care-page').classList.add('hidden');
+
+        if(page === 'dashboard') {
+            document.getElementById('dashboard-page').classList.remove('hidden');
+            if (clockInterval) clearInterval(clockInterval);
+            updateClock();
+            clockInterval = setInterval(updateClock, 1000);
+            const id = document.getElementById('idInput').value.toUpperCase();
+            
+            document.getElementById('userTag').innerText = "Account ID: " + id;
+            const stripped = stripPrefix(id);
+            const breInfo = stripped && brePersonnel[stripped];
+            const conInfo = stripped && getConInfo(stripped);
+            const firstRecord = mockCareData.find(c => c.bfiNumber.toUpperCase() === id || c.employee.toUpperCase() === id);
+            const displayName = breInfo ? breInfo.name : (conInfo ? conInfo.name : (firstRecord && firstRecord.employee !== '[List]' ? firstRecord.employee : id));
+            let displayExtra = '';
+            if (breInfo) {
+                const pos = `${breInfo.position}${breInfo.company ? ' - ' + breInfo.company : ''}`;
+                displayExtra = breInfo.email
+                    ? `<span style="font-size:12px;color:#bbb;">${breInfo.email}</span><br><span style="font-size:13px;color:#999;font-weight:normal;">${pos}</span>`
+                    : `<span style="font-size:13px;color:#999;font-weight:normal;">${pos}</span>`;
+            } else if (conInfo) {
+                const pos = `${conInfo.position}${conInfo.company ? ' - ' + conInfo.company : ''}`;
+                displayExtra = `<span style="font-size:13px;color:#999;font-weight:normal;">${pos}</span>`;
+            } else if (firstRecord) {
+                displayExtra = `<span style="font-size:13px;color:#999;font-weight:normal;">${firstRecord.company ? firstRecord.position + ' - ' + firstRecord.company : firstRecord.position}</span>`;
+            }
+            document.getElementById('welcomeText').innerHTML = `Welcome<br><span style="font-size:18px;color:#fff;">${displayName}</span>${displayExtra ? `<br>${displayExtra}` : ''}`;
+            
+            const recordsContent = document.getElementById('recordsContent');
+            const exportContent = document.getElementById('exportContent');
+            
+            const userData = filterCareData(loggedInId);
+            
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            const monthRecords = userData.filter(c => {
+                const d = new Date(c.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            const yearRecords = userData.filter(c => {
+                const d = new Date(c.date);
+                return d.getFullYear() === currentYear;
+            });
+            
+            const sortedByDate = [...userData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const last = sortedByDate[0] || { type: '-', dateStr: '-', day: '-' };
+            
+            const careHtml = `
+                <div class="record-group">
+                    <h4>CARE Cards</h4>
+                    <div class="record-item"><span class="record-label">Total Submitted (All Time Records)</span> <span class="record-value">${userData.length}</span></div>
+                    <div class="record-item"><span class="record-label">Sub-Total For The Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${monthRecords.length}</span></div>
+                    <div class="record-item"><span class="record-label">Total For The Year (${currentYear})</span> <span class="record-value">${yearRecords.length >= 12 ? `<span style="color:var(--bfi-gold);font-weight:bold;">${yearRecords.length} / 12 &#9679; Met</span>` : `${yearRecords.length} / 12`}</span></div>
+                    <div class="record-item"><span class="record-label">Last Submission</span> <span class="record-value">${last.type}<small>${last.dateStr}, ${last.day}</small></span></div>
+                </div>
+            `;
+            
+            const userWalkData = filterWalkData(loggedInId);
+            const walkMonthRecords = userWalkData.filter(c => {
+                const d = new Date(c.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            const walkYearRecords = userWalkData.filter(c => {
+                const d = new Date(c.date);
+                return d.getFullYear() === currentYear;
+            });
+            const walkSorted = [...userWalkData].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const walkLast = walkSorted[0] || { dateStr: '-', day: '-' };
+
+            const walkaboutHtml = `
+                <div class="record-group">
+                    <h4>Walkabouts</h4>
+                    <div class="record-item"><span class="record-label">Total Joined (All Time Records)</span> <span class="record-value">${userWalkData.length}</span></div>
+                    <div class="record-item"><span class="record-label">Sub-Total For The Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${walkMonthRecords.length}</span></div>
+                    <div class="record-item"><span class="record-label">Total For The Year (${currentYear})</span> <span class="record-value">${walkYearRecords.length >= 12 ? `<span style="color:var(--bfi-gold);font-weight:bold;">${walkYearRecords.length} / 12 &#9679; Met</span>` : `${walkYearRecords.length} / 12`}</span></div>
+                    <div class="record-item"><span class="record-label">Last Joined</span> <span class="record-value">${walkLast.dateStr}, ${walkLast.day}</span></div>
+                </div>
+            `;
+
+            const isContractor = filterCareData(loggedInId).some(c => c.staffType === 'Contractor') || /^C0*\d+$/i.test(loggedInId);
+
+            if (!isContractor) {
+                recordsContent.innerHTML = careHtml + walkaboutHtml;
+                exportContent.innerHTML = `
+                    <button class="export-btn" onclick="exportPDF('both')">Export Both Records (PDF)</button>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="export-btn" style="margin-top: 0; flex: 1;" onclick="exportPDF('care')">Export CARE Cards</button>
+                        <button class="export-btn" style="margin-top: 0; flex: 1;" onclick="exportPDF('walkabout')">Export Walkabouts</button>
+                    </div>
+                `;
+                document.getElementById('walkBtn').classList.remove('hidden');
+            } else {
+                recordsContent.innerHTML = careHtml;
+                exportContent.innerHTML = `
+                    <button class="export-btn" onclick="exportPDF('care')">Export CARE Cards Only (PDF)</button>
+                `;
+                document.getElementById('walkBtn').classList.add('hidden');
+            }
+
+            document.getElementById('contribution-container').innerHTML = renderContributionGraph(loggedInId);
+        } else if (page === 'walkabout') {
+            const userWalkData = filterWalkData(loggedInId);
+            const filterVal = (document.getElementById('walkaboutFilter').value || '').toLowerCase();
+            const filtered = filterVal ? userWalkData.filter(r =>
+                (r.dateStr && r.dateStr.toLowerCase().includes(filterVal)) ||
+                (r.day && r.day.toLowerCase().includes(filterVal)) ||
+                (r.location && r.location.toLowerCase().includes(filterVal)) ||
+                (r.specificLocation && r.specificLocation.toLowerCase().includes(filterVal)) ||
+                (r.department && r.department.toLowerCase().includes(filterVal)) ||
+                (r.section && r.section.toLowerCase().includes(filterVal))
+            ) : userWalkData;
+            renderHistory(filtered, 'walkabout-history-list', false);
+            document.getElementById('walkabout-page').classList.remove('hidden');
+            
+        } else if (page === 'care') {
+            document.getElementById('care-submit').classList.add('hidden');
+            
+            const userData = filterCareData(loggedInId);
+            const filterVal = (document.getElementById('careFilter').value || '').toLowerCase();
+            const filtered = filterVal ? userData.filter(r =>
+                (r.dateStr && r.dateStr.toLowerCase().includes(filterVal)) ||
+                (r.day && r.day.toLowerCase().includes(filterVal)) ||
+                (r.type && r.type.toLowerCase().includes(filterVal)) ||
+                (r.location && r.location.toLowerCase().includes(filterVal)) ||
+                (r.purpose && r.purpose.toLowerCase().includes(filterVal)) ||
+                (r.status && r.status.toLowerCase().includes(filterVal))
+            ) : userData;
+            
+            // Generate Care Stats
+            const total = userData.length;
+            const closed = userData.filter(c => c.status === 'Closed').length;
+            const followup = userData.filter(c => c.status === 'Being Followed Up').length;
+            const pending = userData.filter(c => c.status === 'Pending Review').length;
+            const rejected = userData.filter(c => c.status === 'Rejected').length;
+
+            document.getElementById('care-stats-container').innerHTML = `
+                <div class="stat-box" style="border-top: 3px solid var(--bfi-gold); margin-bottom: 10px; padding: 15px; background: #2A2A2A;">
+                    <div class="stat-num" style="font-size: 26px; color: var(--bfi-gold);">${total}</div>
+                    <div class="stat-label" style="font-size: 12px; font-weight: bold;">Total CARE Cards Submitted</div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box" style="border-top: 3px solid var(--bfi-green);">
+                        <div class="stat-num">${closed}</div>
+                        <div class="stat-label">Closed</div>
+                    </div>
+                    <div class="stat-box" style="border-top: 3px solid var(--info-blue);">
+                        <div class="stat-num">${followup}</div>
+                        <div class="stat-label">Follow Up</div>
+                    </div>
+                    <div class="stat-box" style="border-top: 3px solid var(--warning-yellow);">
+                        <div class="stat-num">${pending}</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-box" style="border-top: 3px solid var(--alert-red);">
+                        <div class="stat-num">${rejected}</div>
+                        <div class="stat-label">Rejected</div>
+                    </div>
+                </div>
+            `;
+
+            renderHistory(filtered, 'care-history-list', true);
+            document.getElementById('care-page').classList.remove('hidden');
+        }
+    }
+
+    function stripPrefix(id) {
+        const m = id.match(/^(C|BRE)0*(\d+)$/i);
+        return m ? m[2] : null;
+    }
+
+    function getConInfo(key) {
+        const arr = contractorPersonnel[key];
+        return arr && arr.length > 0 ? arr[0] : null;
+    }
+
+    function filterCareData(id) {
+        const stripped = stripPrefix(id);
+        const upperId = id.toUpperCase();
+        const conKey = stripped || (/^\d+$/.test(id) && contractorPersonnel[id] ? id : null);
+        const conName = conKey && getConInfo(conKey)?.name?.toUpperCase();
+        return mockCareData.filter(c =>
+            c.bfiNumber.toUpperCase() === upperId ||
+            c.employee.toUpperCase() === upperId ||
+            (stripped && (c.bfiNumber === stripped || c.bfiNumber === id.replace(/^(C|BRE)0*/i, ''))) ||
+            (conName && c.employee.toUpperCase() === conName)
+        );
+    }
+
+    function filterWalkData(id) {
+        const stripped = stripPrefix(id);
+        const upperId = id.toUpperCase();
+        const conKey = stripped || (/^\d+$/.test(id) && contractorPersonnel[id] ? id : null);
+        const conName = conKey && getConInfo(conKey)?.name?.toUpperCase();
+        return mockWalkaboutData.filter(c =>
+            c.bfiNumber.toUpperCase() === upperId ||
+            (stripped && (c.bfiNumber === stripped || c.bfiNumber === id.replace(/^(C|BRE)0*/i, ''))) ||
+            (conName && c.employee.toUpperCase() === conName)
+        );
+    }
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function exportPDF(type) {
+        const id = loggedInId;
+        const stripped = stripPrefix(id);
+        const breInfo = stripped && brePersonnel[stripped];
+        const conInfo = stripped && getConInfo(stripped);
+        const firstRecord = mockCareData.find(c => c.bfiNumber.toUpperCase() === id || c.employee.toUpperCase() === id);
+        const displayName = breInfo ? breInfo.name : (conInfo ? conInfo.name : (firstRecord && firstRecord.employee !== '[List]' ? firstRecord.employee : id));
+        const displayExtra = breInfo ? `${breInfo.position}${breInfo.company ? ' - ' + breInfo.company : ''}` : (conInfo ? `${conInfo.position}${conInfo.company ? ' - ' + conInfo.company : ''}` : (firstRecord ? (firstRecord.company ? `${firstRecord.position} - ${firstRecord.company}` : firstRecord.position) : ''));
+
+        const careData = filterCareData(id);
+        const walkData = filterWalkData(id);
+
+        let html = `<div class="print-header">
+            <h1>BFI OSS Portal &mdash; Safety Records</h1>
+            <p><strong>${escapeHtml(displayName)}</strong> &mdash; ${escapeHtml(displayExtra)}</p>
+            <p>Account: ${escapeHtml(id)} &mdash; Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'})}</p>
+        </div>`;
+
+        if (type === 'both' || type === 'care') {
+            html += `<h2 class="print-section-title">CARE Cards (${careData.length})</h2>`;
+            if (careData.length === 0) {
+                html += `<p style="font-size:12px;color:#999;">No CARE Card records found.</p>`;
+            } else {
+                html += `<table class="print-table"><thead><tr>
+                    <th>Date</th><th>Day</th><th>Type</th><th>Location</th><th>Purpose</th><th>Observation</th><th>Action</th>
+                </tr></thead><tbody>`;
+                const sorted = [...careData].sort((a, b) => new Date(b.date) - new Date(a.date));
+                for (const r of sorted) {
+                    html += `<tr>
+                        <td>${escapeHtml(r.dateStr)}</td>
+                        <td>${escapeHtml(r.day)}</td>
+                        <td>${escapeHtml(r.type)}</td>
+                        <td>${escapeHtml(r.location)}</td>
+                        <td>${escapeHtml(r.purpose)}</td>
+                        <td>${escapeHtml(r.observation)}</td>
+                        <td>${escapeHtml(r.action)}</td>
+                    </tr>`;
+                }
+                html += `</tbody></table>`;
+            }
+        }
+
+        if (type === 'both' || type === 'walkabout') {
+            html += `<h2 class="print-section-title">Daily Walkabouts (${walkData.length})</h2>`;
+            if (walkData.length === 0) {
+                html += `<p style="font-size:12px;color:#999;">No Walkabout records found.</p>`;
+            } else {
+                html += `<table class="print-table"><thead><tr>
+                    <th>Date</th><th>Day</th><th>Location</th><th>Specific Location</th><th>Department</th><th>Section</th>
+                </tr></thead><tbody>`;
+                const sorted = [...walkData].sort((a, b) => new Date(b.date) - new Date(a.date));
+                for (const r of sorted) {
+                    html += `<tr>
+                        <td>${escapeHtml(r.dateStr)}</td>
+                        <td>${escapeHtml(r.day)}</td>
+                        <td>${escapeHtml(r.location)}</td>
+                        <td>${escapeHtml(r.specificLocation)}</td>
+                        <td>${escapeHtml(r.department)}</td>
+                        <td>${escapeHtml(r.section)}</td>
+                    </tr>`;
+                }
+                html += `</tbody></table>`;
+            }
+        }
+
+        html += `<div class="print-footer">BFI Occupational Safety &amp; Security (OSS) Portal &mdash; All dates in DD/MM/YYYY &middot; All times in 24-hour HH:MM</div>`;
+
+        const printArea = document.getElementById('printArea');
+        printArea.innerHTML = html;
+        printArea.style.display = 'block';
+        setTimeout(() => {
+            window.print();
+            printArea.style.display = 'none';
+        }, 200);
+    }
+</script>
+</body>
+</html>
