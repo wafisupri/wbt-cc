@@ -371,18 +371,16 @@
         el.innerHTML = `Month: ${m} &middot; Year: ${y} &middot; ${h}:${min}:<span style="color: var(--bfi-gold);">${s}</span>`;
     }
 
-    function getContributionCounts(id) {
-        const careData = filterCareData(id);
-        const walkData = filterWalkData(id);
+    function getContributionCounts(data) {
         const counts = {};
-        [...careData, ...walkData].forEach(r => {
+        data.forEach(r => {
             counts[r.date] = (counts[r.date] || 0) + 1;
         });
         return counts;
     }
 
-    function renderContributionGraph(id) {
-        const counts = getContributionCounts(id);
+    function renderContributionGraph(data, label) {
+        const counts = getContributionCounts(data);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -429,7 +427,7 @@
 
         return `
             <div class="record-group contrib-card">
-                <h4>Activity (Past Year)</h4>
+                <h4>${label} Activity (Past Year)</h4>
                 <div class="contrib-scroll">
                     <div class="contrib-inner">
                         <div class="contrib-months">${monthsHtml}</div>
@@ -444,7 +442,7 @@
                     </div>
                 </div>
                 <div class="contrib-footer">
-                    <span class="contrib-total">${totalCount} submission${totalCount === 1 ? '' : 's'} in the last year</span>
+                    <span class="contrib-total">${totalCount} ${label.toLowerCase()} entr${totalCount === 1 ? 'y' : 'ies'} in the last year</span>
                     <span class="contrib-legend">Less <span class="contrib-cell contrib-level-0"></span><span class="contrib-cell contrib-level-1"></span><span class="contrib-cell contrib-level-2"></span><span class="contrib-cell contrib-level-3"></span><span class="contrib-cell contrib-level-4"></span> More</span>
                 </div>
             </div>
@@ -649,7 +647,9 @@
                 document.getElementById('walkBtn').classList.add('hidden');
             }
 
-            document.getElementById('contribution-container').innerHTML = renderContributionGraph(loggedInId);
+            document.getElementById('contribution-container').innerHTML =
+                renderContributionGraph(userData, 'CARE Card') +
+                (isContractor ? '' : renderContributionGraph(userWalkData, 'Walkabout'));
         } else if (page === 'walkabout') {
             const userWalkData = filterWalkData(loggedInId);
             const filterVal = (document.getElementById('walkaboutFilter').value || '').toLowerCase();
