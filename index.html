@@ -55,6 +55,33 @@
         .stat-num { font-size: 18px; font-weight: bold; color: white; margin-bottom: 3px; }
         .stat-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.1; }
 
+        /* Contribution Graph (GitHub-style activity heatmap) */
+        .contrib-card { overflow: hidden; }
+        .contrib-scroll { overflow-x: auto; padding-bottom: 4px; }
+        .contrib-inner { display: inline-block; min-width: 100%; }
+        .contrib-months { display: grid; grid-template-columns: repeat(53, 11px); gap: 3px; margin-left: 28px; height: 14px; margin-bottom: 4px; }
+        .contrib-month-label { font-size: 10px; color: #888; white-space: nowrap; }
+        .contrib-body { display: flex; align-items: flex-start; }
+        .contrib-daylabels { position: relative; width: 22px; height: 95px; margin-right: 6px; flex-shrink: 0; }
+        .contrib-daylabels span { position: absolute; font-size: 9px; color: #888; line-height: 11px; }
+        .contrib-graph { display: grid; grid-template-columns: repeat(53, 11px); grid-template-rows: repeat(7, 11px); grid-auto-flow: column; gap: 3px; }
+        .contrib-cell { width: 11px; height: 11px; border-radius: 2px; background: #2c2c2c; }
+        .contrib-cell.contrib-empty { background: transparent; }
+        .contrib-level-0 { background: #2c2c2c; }
+        .contrib-level-1 { background: rgba(46, 125, 50, 0.35); }
+        .contrib-level-2 { background: rgba(46, 125, 50, 0.6); }
+        .contrib-level-3 { background: rgba(46, 125, 50, 0.85); }
+        .contrib-level-4 { background: #4CAF50; }
+        .contrib-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: #888; flex-wrap: wrap; gap: 8px; }
+        .contrib-legend { display: flex; align-items: center; gap: 3px; }
+        .contrib-legend .contrib-cell { display: inline-block; }
+        @media (max-width: 480px) {
+            .contrib-months { grid-template-columns: repeat(53, 8px); margin-left: 20px; }
+            .contrib-graph { grid-template-columns: repeat(53, 8px); grid-template-rows: repeat(7, 8px); }
+            .contrib-cell { width: 8px; height: 8px; }
+            .contrib-daylabels { width: 16px; height: 68px; }
+        }
+
         /* History List Styling */
         .history-year { color: var(--bfi-gold); margin-top: 20px; border-bottom: 1px solid #444; padding-bottom: 5px; font-size: 18px; font-weight: bold; }
         .history-month { color: var(--bfi-green); margin-top: 15px; margin-bottom: 10px; font-size: 15px; font-weight: bold; text-transform: uppercase; }
@@ -180,7 +207,8 @@
             
             <div id="recordsContent"></div>
             <div id="exportContent" style="margin-top: 15px;"></div>
-            
+            <div id="contribution-container" style="margin-top: 20px;"></div>
+
             <hr style="margin: 20px 0; border-color: #444;">
 
             <div class="nav-btn" id="walkBtn" onclick="showPage('walkabout')">Go to Daily Walkabout</div>
@@ -341,6 +369,84 @@
         const min = String(now.getMinutes()).padStart(2, '0');
         const s = String(now.getSeconds()).padStart(2, '0');
         el.innerHTML = `Month: ${m} &middot; Year: ${y} &middot; ${h}:${min}:<span style="color: var(--bfi-gold);">${s}</span>`;
+    }
+
+    function getContributionCounts(data) {
+        const counts = {};
+        data.forEach(r => {
+            counts[r.date] = (counts[r.date] || 0) + 1;
+        });
+        return counts;
+    }
+
+    function renderContributionGraph(data, label) {
+        const counts = getContributionCounts(data);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Align the visible window to whole weeks (Sun-Sat), ending on the current week's Saturday
+        const endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+        const totalWeeks = 53;
+        const startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - (totalWeeks * 7 - 1));
+
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let cellsHtml = '';
+        let monthsHtml = '';
+        let lastMonth = -1;
+        let totalCount = 0;
+
+        for (let w = 0; w < totalWeeks; w++) {
+            const weekStart = new Date(startDate);
+            weekStart.setDate(weekStart.getDate() + w * 7);
+            if (weekStart.getMonth() !== lastMonth) {
+                lastMonth = weekStart.getMonth();
+                monthsHtml += `<div class="contrib-month-label" style="grid-column:${w + 1};">${monthNames[lastMonth]}</div>`;
+            }
+            for (let d = 0; d < 7; d++) {
+                const cellDate = new Date(startDate);
+                cellDate.setDate(cellDate.getDate() + w * 7 + d);
+                if (cellDate > today) {
+                    cellsHtml += `<div class="contrib-cell contrib-empty"></div>`;
+                    continue;
+                }
+                const key = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, '0')}-${String(cellDate.getDate()).padStart(2, '0')}`;
+                const count = counts[key] || 0;
+                totalCount += count;
+                let level = 0;
+                if (count === 1) level = 1;
+                else if (count >= 2 && count <= 3) level = 2;
+                else if (count >= 4 && count <= 5) level = 3;
+                else if (count >= 6) level = 4;
+                const dateLabel = cellDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                const title = count === 0 ? `No submissions on ${dateLabel}` : `${count} submission${count > 1 ? 's' : ''} on ${dateLabel}`;
+                cellsHtml += `<div class="contrib-cell contrib-level-${level}" title="${title}"></div>`;
+            }
+        }
+
+        return `
+            <div class="record-group contrib-card">
+                <h4>${label} Activity (Past Year)</h4>
+                <div class="contrib-scroll">
+                    <div class="contrib-inner">
+                        <div class="contrib-months">${monthsHtml}</div>
+                        <div class="contrib-body">
+                            <div class="contrib-daylabels">
+                                <span style="top:11px;">Mon</span>
+                                <span style="top:39px;">Wed</span>
+                                <span style="top:67px;">Fri</span>
+                            </div>
+                            <div class="contrib-graph">${cellsHtml}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contrib-footer">
+                    <span class="contrib-total">${totalCount} ${label.toLowerCase()} entr${totalCount === 1 ? 'y' : 'ies'} in the last year</span>
+                    <span class="contrib-legend">Less <span class="contrib-cell contrib-level-0"></span><span class="contrib-cell contrib-level-1"></span><span class="contrib-cell contrib-level-2"></span><span class="contrib-cell contrib-level-3"></span><span class="contrib-cell contrib-level-4"></span> More</span>
+                </div>
+            </div>
+        `;
     }
 
     function renderHistory(data, containerId, isCareCard) {
@@ -540,6 +646,10 @@
                 `;
                 document.getElementById('walkBtn').classList.add('hidden');
             }
+
+            document.getElementById('contribution-container').innerHTML =
+                renderContributionGraph(userData, 'CARE Card') +
+                (isContractor ? '' : renderContributionGraph(userWalkData, 'Walkabout'));
         } else if (page === 'walkabout') {
             const userWalkData = filterWalkData(loggedInId);
             const filterVal = (document.getElementById('walkaboutFilter').value || '').toLowerCase();
