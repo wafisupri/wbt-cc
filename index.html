@@ -3,123 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>BFI OSS Portal</title>
+    <script>
+      /* Set theme before first paint to avoid a flash of the wrong theme. */
+      (function () {
+        try {
+          var k = 'bfi-oss-theme';
+          var s = localStorage.getItem(k);
+          var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var resolved = (s === 'light' || s === 'dark') ? s : (dark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', resolved);
+        } catch (e) {}
+      })();
+    </script>
     <style>
+        /* ---- Design tokens: light is the default, dark overrides below ---- */
         :root {
-            --bg-charcoal: #1A1A1A;
-            --surface-neutral: #2C2C2C;
-            --bfi-green: #2E7D32;
+            /* BFI accents (theme-aware) */
+            --bfi-green: #256a29;         /* AA on white and tinted card surfaces */
+            --bfi-gold: #7a6010;          /* AA on white and tinted card surfaces */
+            --warning-yellow: #B26A00;
+            --info-blue: #1E6FB8;
+            --alert-red: #C62828;
+            /* Neutrals */
+            --bg-charcoal: #f4f2ec;       /* page background */
+            --surface-neutral: #ffffff;   /* card surface */
+            --surface-2: #f1efe8;         /* inset panel */
+            --surface-3: #e8e5dc;         /* nested control / row */
+            --control-bg: #ddd9cf;        /* file-picker button */
+            --border-1: rgba(0,0,0,0.12);
+            --border-2: rgba(0,0,0,0.16);
+            --text-white: #1a1a18;        /* primary text */
+            --text-2: #45443f;            /* secondary text */
+            --text-3: #63625b;            /* muted text (AA on all light surfaces) */
+            --on-accent: #ffffff;         /* text on green/gold fills */
+            --shadow-1: 0 1px 3px rgba(0,0,0,0.10), 0 6px 18px rgba(0,0,0,0.06);
+            --focus: #1E6FB8;
+            --green-tint: rgba(46,125,50,0.12);
+            --green-tint-border: rgba(46,125,50,0.32);
+            --hm0: #e8e5dc; --hm1: #c6e3c0; --hm2: #8fce89; --hm3: #4fa858; --hm4: #256a29;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bfi-green: #4CAF50;
+                --bfi-gold: #D4AF37;
+                --warning-yellow: #FFB800;
+                --info-blue: #4D9DE0;
+                --alert-red: #F44336;
+                --bg-charcoal: #1A1A1A;
+                --surface-neutral: #2C2C2C;
+                --surface-2: #222222;
+                --surface-3: #333333;
+                --control-bg: #555555;
+                --border-1: rgba(255,255,255,0.10);
+                --border-2: #444444;
+                --text-white: #FFFFFF;
+                --text-2: #cccccc;
+                --text-3: #a6a49b;
+                --on-accent: #ffffff;
+                --shadow-1: 0 2px 8px rgba(0,0,0,0.45);
+                --focus: #7db3e8;
+                --green-tint: rgba(76,175,80,0.15);
+                --green-tint-border: rgba(76,175,80,0.35);
+                --hm0: #2b2b2b; --hm1: #1f4a22; --hm2: #2e7d32; --hm3: #43a047; --hm4: #69c06d;
+            }
+        }
+        :root[data-theme="dark"] {
+            --bfi-green: #4CAF50;
             --bfi-gold: #D4AF37;
             --warning-yellow: #FFB800;
             --info-blue: #4D9DE0;
             --alert-red: #F44336;
+            --bg-charcoal: #1A1A1A;
+            --surface-neutral: #2C2C2C;
+            --surface-2: #222222;
+            --surface-3: #333333;
+            --control-bg: #555555;
+            --border-1: rgba(255,255,255,0.10);
+            --border-2: #444444;
             --text-white: #FFFFFF;
+            --text-2: #cccccc;
+            --text-3: #a6a49b;
+            --on-accent: #ffffff;
+            --shadow-1: 0 2px 8px rgba(0,0,0,0.45);
+            --focus: #7db3e8;
+            --green-tint: rgba(76,175,80,0.15);
+            --green-tint-border: rgba(76,175,80,0.35);
+            --hm0: #2b2b2b; --hm1: #1f4a22; --hm2: #2e7d32; --hm3: #43a047; --hm4: #69c06d;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-charcoal); color: var(--text-white); margin: 0; padding: 20px; display: flex; flex-direction: column; min-height: 100vh; }
-        .container { max-width: 720px; margin: 0 auto; flex: 1; width: 100%; }
-        
-        .logo-container { text-align: center; margin-bottom: 20px; }
-        .logo-container img { width: 180px; height: auto; display: block; margin: 0 auto; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-charcoal); color: var(--text-white); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; transition: background-color 0.2s, color 0.2s; }
+        a { color: var(--bfi-green); }
+        :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
 
-        .card { background-color: var(--surface-neutral); padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--bfi-gold); }
-        button, .nav-btn, .export-btn { box-sizing: border-box; width: 100%; padding: 10px; font-size: 13px; font-weight: bold; cursor: pointer; border-radius: 4px; line-height: 1.2; }
-        button { margin-top: 10px; background-color: var(--bfi-green); color: white; border: none; }
-        .nav-btn { display: block; margin: 10px 0; background-color: var(--surface-neutral); color: var(--bfi-gold); border: 1px solid var(--bfi-gold); text-align: center; }
+        .skip-link { position: absolute; left: -999px; top: 0; background: var(--bfi-green); color: #fff; padding: 8px 14px; border-radius: 0 0 6px 0; z-index: 100; }
+        .skip-link:focus { left: 0; }
+
+        /* ---- Header ---- */
+        .site-header { position: sticky; top: 0; z-index: 20; background: var(--surface-neutral); border-bottom: 1px solid var(--border-1); box-shadow: 0 1px 0 var(--border-1); }
+        .header-top { max-width: 1000px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .header-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+        .brand-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .header-logo { height: 60px; width: auto; display: block; }
+        .slogan { font-size: 9.5px; font-weight: 600; color: var(--bfi-green); letter-spacing: 0.3px; margin: 4px 0 0; white-space: nowrap; }
+        .header-text { min-width: 0; }
+        .header-text h1 { font-size: 20px; font-weight: 700; color: var(--text-white); letter-spacing: -0.3px; margin: 0; }
+        .header-text p { font-size: 11px; color: var(--text-3); margin: 2px 0 0; }
+        .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .theme-toggle { background: none; border: 1px solid var(--border-2); border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--text-3); cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+        .theme-toggle:hover { border-color: var(--text-3); color: var(--text-white); }
+        .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--green-tint); color: var(--bfi-green); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--green-tint-border); white-space: nowrap; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--bfi-green); }
+        .app-nav { max-width: 1000px; margin: 0 auto; padding: 0 20px; display: flex; gap: 2px; border-top: 1px solid var(--border-1); overflow-x: auto; scrollbar-width: none; }
+        .app-nav::-webkit-scrollbar { display: none; }
+        .app-nav button { background: none; border: none; border-bottom: 2px solid transparent; padding: 11px 16px; font-size: 13px; color: var(--text-3); cursor: pointer; font-family: inherit; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
+        .app-nav button:hover { color: var(--text-white); }
+        .app-nav button.active { color: var(--bfi-green); border-bottom-color: var(--bfi-green); font-weight: 600; }
+        .app-nav.hidden { display: none; }
+
+        .container { max-width: 720px; margin: 0 auto; flex: 1; width: 100%; padding: 22px 16px; }
+
+        .card { background-color: var(--surface-neutral); padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-1); border-left: 4px solid var(--bfi-gold); box-shadow: var(--shadow-1); }
+        button, .nav-btn, .export-btn { box-sizing: border-box; width: 100%; padding: 10px; font-size: 13px; font-weight: bold; cursor: pointer; border-radius: 4px; line-height: 1.2; font-family: inherit; }
+        button { margin-top: 10px; background-color: var(--bfi-green); color: var(--on-accent); border: none; }
+        button:hover { filter: brightness(1.08); }
+        .nav-btn { display: block; margin: 10px 0; background-color: transparent; color: var(--bfi-gold); border: 1px solid var(--bfi-gold); text-align: center; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--green-tint); }
         .export-btn { margin-top: 10px; background-color: transparent; color: var(--bfi-gold); border: 1px solid var(--bfi-gold); transition: 0.2s; }
-        input, select { width: 100%; height: 48px; background: #333; border: 1px solid #444; color: white; padding: 0 15px; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
-        
-        /* File Input Specific Styling */
-        input[type="file"] { padding-top: 11px; cursor: pointer; color: #ccc; }
-        input[type="file"]::file-selector-button { background-color: #555; color: white; border: none; padding: 6px 12px; border-radius: 4px; margin-right: 15px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-weight: bold; transition: 0.2s; }
-        input[type="file"]::file-selector-button:hover { background-color: var(--bfi-gold); color: black; }
+        .export-btn:hover { background-color: var(--green-tint); }
+        input, select { width: 100%; height: 48px; background: var(--surface-3); border: 1px solid var(--border-2); color: var(--text-white); padding: 0 15px; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; }
 
-        /* Textarea Specific Styling */
-        textarea { width: 100%; height: 100px; background: #333; border: 1px solid #444; color: white; padding: 15px; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; resize: none; font-family: inherit; }
-        
+        input[type="file"] { padding-top: 11px; cursor: pointer; color: var(--text-2); }
+        input[type="file"]::file-selector-button { background-color: var(--control-bg); color: var(--text-white); border: none; padding: 6px 12px; border-radius: 4px; margin-right: 15px; cursor: pointer; font-family: 'Segoe UI', sans-serif; font-weight: bold; transition: 0.2s; }
+        input[type="file"]::file-selector-button:hover { background-color: var(--bfi-gold); color: #000; }
+
+        textarea { width: 100%; height: 100px; background: var(--surface-3); border: 1px solid var(--border-2); color: var(--text-white); padding: 15px; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; resize: none; font-family: inherit; }
+
         .hidden { display: none; }
         h1, h2, h3 { color: var(--bfi-gold); margin: 0; }
-        
-        /* Dashboard Stats */
-        .record-group { background: #333; padding: 15px; border-radius: 4px; margin-top: 15px; }
-        .record-group h4 { color: var(--bfi-green); margin-top: 0; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #444; font-size: 16px; }
+
+        .record-group { background: var(--surface-3); padding: 15px; border-radius: 4px; margin-top: 15px; }
+        .record-group h4 { color: var(--bfi-green); margin-top: 0; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-2); font-size: 16px; }
         .record-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; align-items: flex-start; }
         .record-item:last-child { margin-bottom: 0; }
-        .record-label { color: #ccc; padding-right: 10px; }
+        .record-label { color: var(--text-2); padding-right: 10px; }
         .record-value { font-weight: bold; text-align: right; }
-        .record-value small { display: block; font-weight: normal; color: #aaa; font-size: 12px; margin-top: 2px; }
-        
-        /* Summary Metrics Grid */
+        .record-value small { display: block; font-weight: normal; color: var(--text-3); font-size: 12px; margin-top: 2px; }
+
         .stats-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-        .stat-box { flex: 1; min-width: 65px; background: #222; padding: 10px 5px; text-align: center; border-radius: 4px; border: 1px solid #333; }
-        .stat-num { font-size: 18px; font-weight: bold; color: white; margin-bottom: 3px; }
-        .stat-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.1; }
+        .stat-box { flex: 1; min-width: 65px; background: var(--surface-2); padding: 10px 5px; text-align: center; border-radius: 4px; border: 1px solid var(--border-1); }
+        .stat-num { font-size: 18px; font-weight: bold; color: var(--text-white); margin-bottom: 3px; }
+        .stat-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.1; }
 
-        /* Contribution Graph (GitHub-style activity heatmap) */
-        .contrib-card { overflow: hidden; }
-        .contrib-scroll { overflow-x: auto; padding-bottom: 4px; }
-        .contrib-inner { display: inline-block; min-width: 100%; }
-        .contrib-months { display: grid; grid-template-columns: repeat(53, 11px); gap: 3px; margin-left: 28px; height: 14px; margin-bottom: 4px; }
-        .contrib-month-label { font-size: 10px; color: #888; white-space: nowrap; }
-        .contrib-body { display: flex; align-items: flex-start; }
-        .contrib-daylabels { position: relative; width: 22px; height: 95px; margin-right: 6px; flex-shrink: 0; }
-        .contrib-daylabels span { position: absolute; font-size: 9px; color: #888; line-height: 11px; }
-        .contrib-graph { display: grid; grid-template-columns: repeat(53, 11px); grid-template-rows: repeat(7, 11px); grid-auto-flow: column; gap: 3px; }
-        .contrib-cell { width: 11px; height: 11px; border-radius: 2px; background: #2c2c2c; }
-        .contrib-cell.contrib-empty { background: transparent; }
-        .contrib-level-0 { background: #2c2c2c; }
-        .contrib-level-1 { background: rgba(46, 125, 50, 0.35); }
-        .contrib-level-2 { background: rgba(46, 125, 50, 0.6); }
-        .contrib-level-3 { background: rgba(46, 125, 50, 0.85); }
-        .contrib-level-4 { background: #4CAF50; }
-        .contrib-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: #888; flex-wrap: wrap; gap: 8px; }
-        .contrib-legend { display: flex; align-items: center; gap: 3px; }
-        .contrib-legend .contrib-cell { display: inline-block; }
-        @media (max-width: 480px) {
-            .contrib-months { grid-template-columns: repeat(53, 8px); margin-left: 20px; }
-            .contrib-graph { grid-template-columns: repeat(53, 8px); grid-template-rows: repeat(7, 8px); }
-            .contrib-cell { width: 8px; height: 8px; }
-            .contrib-daylabels { width: 16px; height: 68px; }
-        }
-
-        /* History List Styling */
-        .history-year { color: var(--bfi-gold); margin-top: 20px; border-bottom: 1px solid #444; padding-bottom: 5px; font-size: 18px; font-weight: bold; }
+        .history-year { color: var(--bfi-gold); margin-top: 20px; border-bottom: 1px solid var(--border-2); padding-bottom: 5px; font-size: 18px; font-weight: bold; }
         .history-month { color: var(--bfi-green); margin-top: 15px; margin-bottom: 10px; font-size: 15px; font-weight: bold; text-transform: uppercase; }
-        .history-card { background: #333; padding: 12px; border-radius: 4px; margin-bottom: 8px; transition: 0.2s; }
+        .history-card { background: var(--surface-3); padding: 12px; border-radius: 4px; margin-bottom: 8px; transition: 0.2s; }
         .history-card.walkabout { border-left: 3px solid var(--bfi-gold); }
         .history-card.care { border-left: 3px solid var(--bfi-green); }
         .history-card.rejected { border-left: 3px solid var(--alert-red); cursor: pointer; }
-        .history-card.rejected:hover { background: #3a3a3a; }
+        .history-card.rejected:hover { filter: brightness(0.97); }
 
-        /* Status Badges */
         .status-badge { font-size: 10px; padding: 3px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
-        .status-pending { background-color: rgba(255, 184, 0, 0.1); color: var(--warning-yellow); border: 1px solid var(--warning-yellow); }
-        .status-followup { background-color: rgba(77, 157, 224, 0.1); color: var(--info-blue); border: 1px solid var(--info-blue); }
-        .status-closed { background-color: rgba(46, 125, 50, 0.1); color: var(--bfi-green); border: 1px solid var(--bfi-green); }
-        .status-rejected { background-color: rgba(244, 67, 54, 0.1); color: var(--alert-red); border: 1px solid var(--alert-red); }
+        .status-pending { background-color: rgba(178, 106, 0, 0.12); color: var(--warning-yellow); border: 1px solid var(--warning-yellow); }
+        .status-followup { background-color: rgba(30, 111, 184, 0.12); color: var(--info-blue); border: 1px solid var(--info-blue); }
+        .status-closed { background-color: var(--green-tint); color: var(--bfi-green); border: 1px solid var(--bfi-green); }
+        .status-rejected { background-color: rgba(198, 40, 40, 0.12); color: var(--alert-red); border: 1px solid var(--alert-red); }
 
-        /* Rejection Details Drawer */
-        .rejection-details { margin-top: 10px; padding-top: 10px; border-top: 1px solid #555; font-size: 13px; color: #ffcccc; display: none; }
+        .rejection-details { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-2); font-size: 13px; color: var(--alert-red); display: none; }
 
-        footer { text-align: center; font-size: 12px; color: #666; margin-top: 20px; }
+        /* ---- Release notes (login page) ---- */
+        .rn-panel h3 { color: var(--bfi-gold); font-size: 16px; }
+        .rn-sub { font-size: 12px; color: var(--text-3); margin: 6px 0 16px; line-height: 1.55; }
+        .rn-latest { background: var(--surface-2); border: 1px solid var(--border-1); border-left: 3px solid var(--bfi-green); border-radius: 6px; padding: 12px 14px; margin-bottom: 18px; font-size: 12px; line-height: 1.5; }
+        .rn-latest .lbl { color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; font-weight: 700; }
+        .rn-latest .val { color: var(--text-white); font-weight: 700; font-size: 15px; }
+        .rn { position: relative; padding-left: 22px; }
+        .rn::before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--border-2); }
+        .rn-entry { position: relative; margin-bottom: 18px; }
+        .rn-entry:last-child { margin-bottom: 0; }
+        .rn-entry::before { content: ''; position: absolute; left: -22px; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--bfi-green); border: 2px solid var(--surface-neutral); }
+        .rn-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+        .rn-ver { font-size: 15px; font-weight: 700; color: var(--text-white); }
+        .rn-date { font-size: 11px; color: var(--text-3); }
+        .rn-current { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 7px; border-radius: 4px; background: var(--green-tint); color: var(--bfi-green); }
+        .rn-list { list-style: none; padding: 0; margin: 0; }
+        .rn-list li { font-size: 12px; line-height: 1.6; color: var(--text-2); padding: 2px 0 2px 16px; position: relative; }
+        .rn-list li::before { content: '\25B8'; position: absolute; left: 0; color: var(--bfi-green); }
+
+        /* ---- Embedded CARE Card form ---- */
+        .embed-note { font-size: 12px; color: var(--text-2); line-height: 1.55; margin: 0 0 12px; }
+        .form-embed-wrap { border: 1px solid var(--border-2); border-radius: 8px; overflow: hidden; background: #fff; }
+        .form-embed-wrap iframe { width: 100%; height: 620px; border: 0; display: block; background: #fff; }
+
+        /* ---- Scroll-to-top ---- */
+        .scroll-top { position: fixed; bottom: 24px; right: 24px; width: 42px; height: 42px; border-radius: 50%; background: var(--surface-neutral); color: var(--text-3); border: 1px solid var(--border-2); font-size: 18px; cursor: pointer; font-family: inherit; box-shadow: var(--shadow-1); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s; transform: translateY(8px); z-index: 30; }
+        .scroll-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .scroll-top:hover { color: var(--text-white); border-color: var(--text-3); }
+
+        /* ---- Footer ---- */
+        .site-footer { max-width: 1000px; margin: 30px auto 0; padding: 22px 24px 40px; font-size: 12px; color: var(--text-3); border-top: 1px solid var(--border-1); }
+        .site-footer strong { color: var(--text-white); font-weight: 600; }
+        .site-footer p { margin: 0 0 5px; }
+        .site-footer .fine { font-size: 10px; margin-top: 8px; }
+
+        /* ---- Activity heatmap ---- */
+        .hm-block { margin-top: 18px; }
+        .hm-block:first-child { margin-top: 0; }
+        .hm-title { font-size: 13px; font-weight: 700; color: var(--text-white); margin-bottom: 2px; }
+        .hm-title .hm-sub { font-weight: 400; color: var(--text-3); font-size: 11px; }
+        .hm-wrap { overflow-x: auto; padding: 8px 0 4px; }
+        .hm-months { display: grid; grid-auto-flow: column; grid-auto-columns: 13px; gap: 3px; margin-left: 30px; margin-bottom: 3px; min-width: min-content; }
+        .hm-months span { font-size: 9px; color: var(--text-3); white-space: nowrap; grid-row: 1; }
+        .hm-body { display: flex; gap: 4px; min-width: min-content; }
+        .hm-weekdays { display: grid; grid-template-rows: repeat(7, 13px); gap: 3px; }
+        .hm-weekdays span { font-size: 9px; color: var(--text-3); line-height: 13px; height: 13px; }
+        .hm-grid { display: grid; grid-template-rows: repeat(7, 13px); grid-auto-flow: column; grid-auto-columns: 13px; gap: 3px; }
+        .hm-cell { width: 13px; height: 13px; border-radius: 2px; background: var(--hm0); }
+        .hm-cell[data-level="1"] { background: var(--hm1); }
+        .hm-cell[data-level="2"] { background: var(--hm2); }
+        .hm-cell[data-level="3"] { background: var(--hm3); }
+        .hm-cell[data-level="4"] { background: var(--hm4); }
+        .hm-legend { display: flex; align-items: center; gap: 4px; justify-content: flex-end; font-size: 10px; color: var(--text-3); margin-top: 6px; }
+        .hm-legend .hm-cell { width: 11px; height: 11px; }
 
         /* Tablet */
         @media (max-width: 768px) {
-            .container { max-width: 100%; padding: 0 8px; }
+            .container { max-width: 100%; }
             .stat-box { min-width: 80px; }
             .card { padding: 16px; }
-            .logo-container img { width: 150px; }
             h1 { font-size: 24px; }
             h2 { font-size: 20px; }
         }
 
         /* Phone */
         @media (max-width: 480px) {
-            body { padding: 10px; }
-            .container { padding: 0; }
+            .header-top { padding: 10px 14px; gap: 10px; }
+            .header-logo { height: 46px; }
+            .header-text h1 { font-size: 16px; }
+            .header-text p { display: none; }
+            .header-right .badge { display: none; }
+            .slogan { font-size: 8.5px; }
+            .app-nav { padding: 0 8px; }
+            .app-nav button { padding: 10px 10px; font-size: 12px; }
+            .container { padding: 14px 10px; }
             .card { padding: 12px; border-left-width: 3px; border-radius: 6px; }
-            .logo-container img { width: 130px; }
-            .logo-container { margin-bottom: 14px; }
             h1 { font-size: 20px; }
             h2 { font-size: 18px; }
             h3 { font-size: 15px; }
@@ -138,22 +267,24 @@
             .history-card > div:first-child { flex-direction: column; gap: 4px; }
             .status-badge { font-size: 9px; padding: 2px 5px; }
             textarea { height: 80px; font-size: 14px; }
-            footer { font-size: 10px; }
-            .rejection-details { font-size: 12px; }
+            .form-embed-wrap iframe { height: 560px; }
+            .site-footer { padding: 18px 14px 36px; }
         }
 
-        /* Phone landscape / small tablets */
         @media (min-width: 481px) and (max-width: 600px) {
             .stat-box { min-width: 42%; }
         }
 
-/* Large desktop */
         @media (min-width: 1024px) {
             .container { max-width: 800px; }
             .card { padding: 24px; }
         }
 
-        /* Print / PDF Export */
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+        }
+
+        /* Print / PDF Export (always paper-styled, independent of theme) */
         @media print {
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
@@ -163,7 +294,7 @@
             .print-header p { margin: 4px 0; font-size: 12px; color: #333; }
             .print-table { width: 100%; border-collapse: collapse; font-size: 11px; page-break-inside: auto; }
             .print-table th { background: #D4AF37; color: black; padding: 6px 4px; text-align: left; font-size: 10px; }
-            .print-table td { padding: 4px; border-bottom: 1px solid #ccc; vertical-align: top; }
+            .print-table td { padding: 4px; border-bottom: 1px solid #ccc; vertical-align: top; color: #000; }
             .print-table tr { page-break-inside: avoid; }
             .print-section-title { color: #2E7D32; font-size: 16px; margin: 20px 0 8px 0; border-bottom: 1px solid #2E7D32; padding-bottom: 4px; }
             .print-footer { text-align: center; font-size: 10px; color: #999; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }
@@ -173,20 +304,55 @@
 </head>
 <body>
 
-<div class="container">
-    <div class="logo-container">
-        <img src="Page04-BFILogo.png" alt="BFI Logo" onerror="this.style.display='none'">
-    </div>
+<a class="skip-link" href="#main">Skip to content</a>
 
-    <!-- Auth -->
-    <div id="auth-view" class="card">
-        <h1 style="text-align: center;">BFI OSS Portal</h1>
-        <input type="text" id="idInput" placeholder="Enter ID or full name (e.g., BFI001, EXP005, BRE12000073, C12000073)" onkeydown="if(event.key==='Enter')performLogin()">
-        <div style="font-size:11px;color:#888;margin:-5px 0 10px 0;text-align:center;line-height:1.6;">
-            BFI (local staff) 001–388 &nbsp;|&nbsp; EXP (expat staff) 005–197 &nbsp;|&nbsp; BRE (business partner) 1–120000080 &nbsp;|&nbsp; C (contractor) 1–120000080 or full name
+<!-- ===================== HEADER ===================== -->
+<header class="site-header">
+    <div class="header-top">
+        <div class="header-left">
+            <div class="brand-col">
+                <img class="header-logo" src="Page04-BFILogo.png" alt="BFI" onerror="this.style.display='none'">
+                <p class="slogan">Making A Difference, With Bruneian Roots</p>
+            </div>
+            <div class="header-text">
+                <h1>BFI OSS Portal</h1>
+                <p>Occupational Safety &amp; Security Section &mdash; Brunei Fertilizer Industries (BFI)</p>
+            </div>
         </div>
-        <p id="loginError" class="hidden" style="color: #ff6b6b; font-size: 13px; margin-top: -5px; margin-bottom: 10px;"></p>
-        <button onclick="performLogin()">Sign In</button>
+        <div class="header-right">
+            <button class="theme-toggle" id="themeToggle" type="button" title="Switch theme"><span aria-hidden="true">&#9728;&#65039;</span> System</button>
+            <div class="badge"><span class="dot"></span> Internal Use Only</div>
+        </div>
+    </div>
+    <nav class="app-nav hidden" id="appNav" aria-label="Portal sections">
+        <button type="button" id="navDashboard" onclick="showPage('dashboard')">Dashboard</button>
+        <button type="button" id="navWalkabout" onclick="showPage('walkabout')">Daily Walkabout</button>
+        <button type="button" id="navCare" onclick="showPage('care')">CARE Card</button>
+    </nav>
+</header>
+
+<main class="container" id="main" tabindex="-1">
+    <!-- Auth / Login -->
+    <div id="auth-view">
+        <div class="card">
+            <h2 style="text-align: center;">Sign In</h2>
+            <input type="text" id="idInput" aria-label="Enter your ID or full name" aria-describedby="idHelp" placeholder="Enter ID or full name (e.g., BFI001, EXP005, BRE12000073, C12000073)" onkeydown="if(event.key==='Enter')performLogin()">
+            <div id="idHelp" style="font-size:11px;color:var(--text-3);margin:-5px 0 10px 0;text-align:center;line-height:1.6;">
+                BFI (local staff) 001&ndash;388 &nbsp;|&nbsp; EXP (expat staff) 005&ndash;197 &nbsp;|&nbsp; BRE (business partner) 1&ndash;120000080 &nbsp;|&nbsp; C (contractor) 1&ndash;120000080 or full name
+            </div>
+            <p id="loginError" role="alert" class="hidden" style="color: var(--alert-red); font-size: 13px; margin-top: -5px; margin-bottom: 10px;"></p>
+            <button onclick="performLogin()">Sign In</button>
+        </div>
+
+        <!-- Release Notes / Data Status -->
+        <div class="card">
+            <div class="rn-panel">
+                <h3>Release Notes &amp; Data Status</h3>
+                <p class="rn-sub">Versions are named <strong>month.week</strong> (e.g. Version 7.2 = July, week&nbsp;2). Check the latest upload below to know whether your most recent submissions are already included.</p>
+                <div class="rn-latest" id="rnLatest"></div>
+                <div class="rn" id="rnList"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Dashboard Page -->
@@ -194,26 +360,28 @@
         <div class="card">
             <div class="tag" id="userTag" style="font-size: 12px; color: var(--bfi-gold); text-transform: uppercase;">Dashboard</div>
             <h2 id="welcomeText" style="margin-bottom: 5px;">Welcome</h2>
-            <div id="clockDisplay" style="font-size: 13px; color: #aaa; margin-bottom: 15px;"></div>
+            <div id="clockDisplay" style="font-size: 13px; color: var(--text-3); margin-bottom: 15px;"></div>
 
-            <div style="background:#222; padding:15px; border-radius:6px; border-left:4px solid var(--bfi-gold); margin-bottom:20px;">
+            <div style="background:var(--surface-2); padding:15px; border-radius:6px; border-left:4px solid var(--bfi-gold); margin-bottom:20px;">
                 <h3 style="font-size:14px; margin-bottom:8px;">About This Portal</h3>
-                <p style="font-size:12px; color:#ccc; line-height:1.6; margin:0 0 6px 0;">The <strong style="color:var(--bfi-gold);">BFI Occupational Safety &amp; Security (OSS) Portal</strong> is a centralized platform for managing and tracking workplace safety records.</p>
-                <p style="font-size:12px; color:#ccc; line-height:1.6; margin:0 0 6px 0;">Employees log in with their BFI/EXP/BRE ID to view their <strong style="color:var(--bfi-gold);">CARE Card</strong> submissions and <strong style="color:var(--bfi-gold);">Daily Walkabout</strong> records.</p>
-                <p style="font-size:12px; color:#888; line-height:1.6; margin:0; font-style:italic;">All dates in DD/MM/YYYY &middot; All times in 24-hour HH:MM</p>
+                <p style="font-size:12px; color:var(--text-2); line-height:1.6; margin:0 0 6px 0;">The <strong style="color:var(--bfi-gold);">BFI Occupational Safety &amp; Security (OSS) Portal</strong> is a centralized platform for managing and tracking workplace safety records.</p>
+                <p style="font-size:12px; color:var(--text-2); line-height:1.6; margin:0 0 6px 0;">Employees log in with their BFI/EXP/BRE ID to view their <strong style="color:var(--bfi-gold);">CARE Card</strong> submissions and <strong style="color:var(--bfi-gold);">Daily Walkabout</strong> records.</p>
+                <p style="font-size:12px; color:var(--text-3); line-height:1.6; margin:0; font-style:italic;">All dates in DD/MM/YYYY &middot; All times in 24-hour HH:MM</p>
             </div>
 
             <h3>Your Safety Records</h3>
-            
+
             <div id="recordsContent"></div>
-            <div id="exportContent" style="margin-top: 15px;"></div>
-            <div id="contribution-container" style="margin-top: 20px;"></div>
 
-            <hr style="margin: 20px 0; border-color: #444;">
+            <div id="heatmapSection" style="margin-top: 22px;"></div>
 
-            <div class="nav-btn" id="walkBtn" onclick="showPage('walkabout')">Go to Daily Walkabout</div>
-            <div class="nav-btn" onclick="showPage('care')">Go to CARE Card</div>
-            <hr style="margin: 20px 0; border-color: #444;">
+            <div id="exportContent" style="margin-top: 20px;"></div>
+
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-2);">
+
+            <button type="button" class="nav-btn" id="walkBtn" onclick="showPage('walkabout')">Go to Daily Walkabout</button>
+            <button type="button" class="nav-btn" onclick="showPage('care')">Go to CARE Card</button>
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-2);">
             <button style="background:var(--alert-red); margin-top: 0;" onclick="signOut()">Sign Out</button>
         </div>
     </div>
@@ -222,10 +390,10 @@
     <div id="walkabout-page" class="hidden">
         <div class="card">
             <h2 style="margin-bottom: 15px;">Walkabout Records</h2>
-            <button style="background:#444; margin-bottom: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
-            <input type="text" id="walkaboutFilter" placeholder="Filter by location, date..." oninput="showPage('walkabout')" style="margin-bottom:10px;">
+            <button style="background:var(--text-3); margin-bottom: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+            <input type="text" id="walkaboutFilter" aria-label="Filter walkabout records" placeholder="Filter by location, date..." oninput="showPage('walkabout')" style="margin-bottom:10px;">
             <div id="walkabout-history-list"></div>
-            <button style="background:#444; margin-top: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+            <button style="background:var(--text-3); margin-top: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
         </div>
     </div>
 
@@ -233,43 +401,146 @@
     <div id="care-page" class="hidden">
         <div class="card">
             <h2 style="margin-bottom: 15px;">CARE Card Records</h2>
-            
+
             <!-- Dynamic Stats Container -->
             <div id="care-stats-container"></div>
-            
-            <button onclick="toggleSection('care-submit')" style="margin-bottom: 10px;">+ Submit New Card</button>
-            <button style="background:#444; margin-bottom: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
 
-            <input type="text" id="careFilter" placeholder="Filter by type, location, date..." oninput="showPage('care')" style="margin-bottom:10px;">
+            <button onclick="toggleSection('care-submit', this)" aria-controls="care-submit" aria-expanded="false" style="margin-bottom: 10px;">+ Submit New Card</button>
+            <button style="background:var(--text-3); margin-bottom: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
 
+            <input type="text" id="careFilter" aria-label="Filter CARE card records" placeholder="Filter by type, location, date..." oninput="showPage('care')" style="margin-bottom:10px;">
 
-            <!-- Submission Form -->
-            <div id="care-submit" class="hidden" style="background: #222; padding: 15px; border-radius: 8px; border: 1px solid #444; margin-bottom: 20px;">
-                <h3 style="margin-bottom: 10px; font-size: 16px;">New Submission</h3>
-                <select><option>Intervene</option><option>Prevent Unsafe Act</option><option>Prevent Unsafe Condition</option><option>Suggestion</option></select>
-                <select><option>Urea Plant</option><option>Ammonia Plant</option><option>Utilities Area</option><option>Storage & Loading</option></select>
-                
-                <input type="file" accept="image/*">
-                <textarea placeholder="Observation details..."></textarea>
-                <button onclick="alert('Submitted successfully!'); toggleSection('care-submit');">Submit Card</button>
+            <!-- Submission Form (official BFI CARE Card form, embedded) -->
+            <div id="care-submit" class="hidden" style="background: var(--surface-2); padding: 15px; border-radius: 8px; border: 1px solid var(--border-2); margin-bottom: 20px;">
+                <h3 style="margin-bottom: 10px; font-size: 16px;">New CARE Card Submission</h3>
+                <p class="embed-note">This is the official BFI Online CARE Card form. Submissions are saved to the OSS database and will appear in your records after the next data upload (see the version on the sign-in page).</p>
+                <a class="nav-btn" href="https://bruneifertilizer.sharepoint.com/sites/MicrosoftPowerTools/_layouts/15/listforms.aspx?cid=MzM1ODA4ODMtNDM1OC00NWYyLThjMWMtNWVhMzkxZjk5Mjg5&amp;nav=NjQ1ZmU4ODUtZTc0My00ZTFlLTk3MGUtYTBjODc2ZjE1MGY1" target="_blank" rel="noopener">Open official SharePoint form (staff sign-in) &#8599;</a>
+                <p class="embed-note" style="margin-top:12px;">Or complete it here (Google Forms &mdash; works for all staff, no sign-in needed):</p>
+                <div class="form-embed-wrap">
+                    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdcKzXLML6FAJ59SlThhb0tO_ZasxG6C6UE6lDHNou2hmacDg/viewform?embedded=true" title="BFI Online CARE Card Form" loading="lazy">Loading form&hellip;</iframe>
+                </div>
             </div>
 
             <div id="care-history-list"></div>
-            <button style="background:#444; margin-top: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
+            <button style="background:var(--text-3); margin-top: 20px;" onclick="showPage('dashboard')">Back to Dashboard</button>
         </div>
     </div>
-</div>
+</main>
 
 <div id="printArea" style="display:none;"></div>
 
-<footer>&copy; 2026 Brunei Fertilizer Industries. All rights reserved.<br><span style="font-size: 10px; color: #555;">All dates in DD/MM/YYYY format &middot; All times in 24-hour HH:MM format</span></footer>
+<footer class="site-footer">
+    <p><strong>BFI Occupational Safety &amp; Security (OSS) Portal</strong> &mdash; Brunei Fertilizer Industries (BFI)</p>
+    <p id="footerVersion">Data Version &mdash; &nbsp;|&nbsp; Last upload: &mdash;</p>
+    <p>Document owner: HSSE Department / OSS Section &nbsp;|&nbsp; Classification: Internal Use Only</p>
+    <p class="fine">&copy; 2026 Brunei Fertilizer Industries. All rights reserved. &middot; All dates in DD/MM/YYYY format &middot; All times in 24-hour HH:MM format</p>
+</footer>
+
+<button class="scroll-top" id="scrollTop" type="button" title="Back to top" aria-label="Back to top">&#8593;</button>
 
 <script src="data.js"></script>
 <script>
+    /* ---- Theme toggle (System -> Light -> Dark) ---- */
+    (function () {
+        var storageKey = 'bfi-oss-theme';
+        function getPreferred() {
+            var s = localStorage.getItem(storageKey);
+            if (s === 'light' || s === 'dark') return s;
+            return 'system';
+        }
+        function systemDark() { return window.matchMedia('(prefers-color-scheme: dark)').matches; }
+        function resolve(pref) { return pref === 'system' ? (systemDark() ? 'dark' : 'light') : pref; }
+        function apply(pref) {
+            document.documentElement.setAttribute('data-theme', resolve(pref));
+            var btn = document.getElementById('themeToggle');
+            if (btn) {
+                var labels = { light: 'Light', dark: 'Dark', system: 'System' };
+                var icon = pref === 'system' ? (systemDark() ? '🌙' : '☀️') : (pref === 'dark' ? '🌙' : '☀️');
+                btn.innerHTML = '<span aria-hidden="true">' + icon + '</span> ' + labels[pref];
+            }
+        }
+        window.__cycleTheme = function () {
+            var next = { system: 'light', light: 'dark', dark: 'system' };
+            var pref = next[getPreferred()] || 'system';
+            localStorage.setItem(storageKey, pref);
+            apply(pref);
+        };
+        apply(getPreferred());
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+            if (getPreferred() === 'system') apply('system');
+        });
+        var tb = document.getElementById('themeToggle');
+        if (tb) tb.addEventListener('click', window.__cycleTheme);
+    })();
+
+    /* ---- Scroll-to-top ---- */
+    (function () {
+        var btn = document.getElementById('scrollTop');
+        if (!btn) return;
+        window.addEventListener('scroll', function () {
+            if (window.scrollY > 320) btn.classList.add('visible');
+            else btn.classList.remove('visible');
+        }, { passive: true });
+        btn.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    })();
+
     let loggedIn = false;
     let loggedInId = '';
 
-    
+    /* ---- Release notes / data status on the login page ---- */
+    function renderReleaseNotes() {
+        const meta = (typeof dataMeta !== 'undefined' && dataMeta) ? dataMeta : null;
+        const notes = (typeof releaseNotes !== 'undefined' && Array.isArray(releaseNotes)) ? releaseNotes : [];
+        const now = new Date();
+        const fbVersion = (now.getMonth() + 1) + '.' + Math.ceil(now.getDate() / 7);
+        const ver = meta ? meta.version : fbVersion;
+
+        const latest = document.getElementById('rnLatest');
+        if (latest) {
+            if (meta) {
+                latest.innerHTML =
+                    '<div><span class="lbl">Latest data upload</span></div>' +
+                    '<div style="margin-top:5px;"><span class="val">Version ' + meta.version + '</span> &middot; uploaded ' + (meta.date || '') + '</div>' +
+                    '<div style="margin-top:6px;color:var(--text-2);">' + Number(meta.careCards).toLocaleString() + ' CARE cards &middot; ' + Number(meta.walkabouts).toLocaleString() + ' walkabout records</div>' +
+                    '<div style="margin-top:6px;font-size:11px;color:var(--text-3);">Submitted something after this date? It will appear in the next upload.</div>';
+            } else {
+                latest.innerHTML =
+                    '<div><span class="val">Version ' + ver + '</span></div>' +
+                    '<div style="margin-top:5px;color:var(--text-3);">Live data status is unavailable in this build.</div>';
+            }
+        }
+
+        const list = document.getElementById('rnList');
+        if (list) {
+            if (!notes.length) {
+                list.innerHTML = '<div class="rn-entry"><div class="rn-head"><span class="rn-ver">Version ' + ver + '</span><span class="rn-current">Current</span></div><ul class="rn-list"><li>Portal data initialized.</li></ul></div>';
+            } else {
+                list.innerHTML = notes.map(function (n, i) {
+                    return '<div class="rn-entry">' +
+                        '<div class="rn-head">' +
+                            '<span class="rn-ver">Version ' + n.version + '</span>' +
+                            '<span class="rn-date">' + (n.date || '') + '</span>' +
+                            (i === 0 ? '<span class="rn-current">Current</span>' : '') +
+                        '</div>' +
+                        '<ul class="rn-list"><li>' + (n.summary ? escapeHtml(n.summary) : '') + '</li></ul>' +
+                    '</div>';
+                }).join('');
+            }
+        }
+
+        const fv = document.getElementById('footerVersion');
+        if (fv) fv.innerHTML = 'Data Version ' + ver + ' &nbsp;|&nbsp; Last upload: ' + (meta && meta.date ? meta.date : '&mdash;');
+    }
+
+    function setActiveNav(page) {
+        ['navDashboard', 'navWalkabout', 'navCare'].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) { el.classList.remove('active'); el.removeAttribute('aria-current'); }
+        });
+        const map = { dashboard: 'navDashboard', walkabout: 'navWalkabout', care: 'navCare' };
+        const active = document.getElementById(map[page]);
+        if (active) { active.classList.add('active'); active.setAttribute('aria-current', 'page'); }
+    }
 
     function performLogin() {
         const rawInput = document.getElementById('idInput').value.trim();
@@ -303,9 +574,10 @@
             found = mockCareData.some(c => c.bfiNumber === stripped || c.bfiNumber === match[2]) ||
                     mockWalkaboutData.some(c => c.bfiNumber === stripped || c.bfiNumber === match[2]);
             if (!found && match[1] === 'C') {
-                // Accept C-prefix login even without matching records
+                // Accept C-prefix login even without matching records.
+                // Keep the full 'C…' id so the contractor check (/^C0*\d+$/) still fires.
                 found = true;
-                loginKey = match[2];
+                loginKey = rawId;
             }
             if (!found && match[1] === 'BRE' && brePersonnel[stripped]) {
                 // Accept BRE login if ID exists in personnel lookup
@@ -324,6 +596,7 @@
             loggedIn = true;
             loggedInId = loginKey;
             errorMsg.classList.add('hidden');
+            document.getElementById('appNav').classList.remove('hidden');
             showPage('dashboard');
         } else {
             errorMsg.innerText = "No records found for this ID or name. Try BFI/EXP/BRE number or your full name.";
@@ -331,18 +604,17 @@
         }
     }
 
-    function toggleSection(id) {
+    function toggleSection(id, btn) {
         const el = document.getElementById(id);
         el.classList.toggle('hidden');
+        if (btn) btn.setAttribute('aria-expanded', el.classList.contains('hidden') ? 'false' : 'true');
     }
 
-    function toggleRejectionReason(id) {
+    function toggleRejectionReason(id, trigger) {
         const el = document.getElementById(id);
-        if (el.style.display === 'block') {
-            el.style.display = 'none';
-        } else {
-            el.style.display = 'block';
-        }
+        const open = el.style.display === 'block';
+        el.style.display = open ? 'none' : 'block';
+        if (trigger) trigger.setAttribute('aria-expanded', open ? 'false' : 'true');
     }
 
     function signOut() {
@@ -353,7 +625,9 @@
         document.getElementById('dashboard-page').classList.add('hidden');
         document.getElementById('walkabout-page').classList.add('hidden');
         document.getElementById('care-page').classList.add('hidden');
+        document.getElementById('appNav').classList.add('hidden');
         if (clockInterval) clearInterval(clockInterval);
+        window.scrollTo({ top: 0 });
     }
 
     let clockInterval = null;
@@ -371,82 +645,59 @@
         el.innerHTML = `Month: ${m} &middot; Year: ${y} &middot; ${h}:${min}:<span style="color: var(--bfi-gold);">${s}</span>`;
     }
 
-    function getContributionCounts(data) {
-        const counts = {};
-        data.forEach(r => {
-            counts[r.date] = (counts[r.date] || 0) + 1;
-        });
-        return counts;
+    function renderActivityHeatmaps(careRecords, walkRecords, isContractor) {
+        const host = document.getElementById('heatmapSection');
+        if (!host) return;
+        let html = heatmapBlock('CARE Card Activity', careRecords);
+        if (!isContractor) html += heatmapBlock('Walkabout Activity', walkRecords);
+        host.innerHTML = html;
     }
 
-    function renderContributionGraph(data, label) {
-        const counts = getContributionCounts(data);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+    // GitHub-style contribution heatmap for the trailing ~12 months, driven by record dates.
+    function heatmapBlock(label, records) {
+        const counts = {};
+        let total = 0;
+        (records || []).forEach(function (r) {
+            if (r && r.date) { counts[r.date] = (counts[r.date] || 0) + 1; total++; }
+        });
+        const pad = function (n) { return String(n).padStart(2, '0'); };
+        const iso = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+        const lvl = function (c) { return c === 0 ? 0 : c === 1 ? 1 : c === 2 ? 2 : c <= 4 ? 3 : 4; };
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-        // Align the visible window to whole weeks (Sun-Sat), ending on the current week's Saturday
-        const endDate = new Date(today);
-        endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
-        const totalWeeks = 53;
-        const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - (totalWeeks * 7 - 1));
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const start = new Date(today);
+        start.setDate(start.getDate() - 363);
+        start.setDate(start.getDate() - start.getDay()); // align to the Sunday on/before
 
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        let cellsHtml = '';
-        let monthsHtml = '';
-        let lastMonth = -1;
-        let totalCount = 0;
-
-        for (let w = 0; w < totalWeeks; w++) {
-            const weekStart = new Date(startDate);
-            weekStart.setDate(weekStart.getDate() + w * 7);
-            if (weekStart.getMonth() !== lastMonth) {
-                lastMonth = weekStart.getMonth();
-                monthsHtml += `<div class="contrib-month-label" style="grid-column:${w + 1};">${monthNames[lastMonth]}</div>`;
+        let cells = '';
+        const monthCols = [];
+        let prevMonth = -1;
+        let col = 0;
+        const cur = new Date(start);
+        while (cur <= today) {
+            if (cur.getDay() === 0) {
+                col++;
+                if (cur.getMonth() !== prevMonth) { monthCols.push({ col: col, label: months[cur.getMonth()] }); prevMonth = cur.getMonth(); }
             }
-            for (let d = 0; d < 7; d++) {
-                const cellDate = new Date(startDate);
-                cellDate.setDate(cellDate.getDate() + w * 7 + d);
-                if (cellDate > today) {
-                    cellsHtml += `<div class="contrib-cell contrib-empty"></div>`;
-                    continue;
-                }
-                const key = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, '0')}-${String(cellDate.getDate()).padStart(2, '0')}`;
-                const count = counts[key] || 0;
-                totalCount += count;
-                let level = 0;
-                if (count === 1) level = 1;
-                else if (count >= 2 && count <= 3) level = 2;
-                else if (count >= 4 && count <= 5) level = 3;
-                else if (count >= 6) level = 4;
-                const dateLabel = cellDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-                const title = count === 0 ? `No submissions on ${dateLabel}` : `${count} submission${count > 1 ? 's' : ''} on ${dateLabel}`;
-                cellsHtml += `<div class="contrib-cell contrib-level-${level}" title="${title}"></div>`;
-            }
+            const c = counts[iso(cur)] || 0;
+            const dstr = pad(cur.getDate()) + '/' + pad(cur.getMonth() + 1) + '/' + cur.getFullYear();
+            const title = c + (c === 1 ? ' record' : ' records') + ' on ' + dstr;
+            cells += '<div class="hm-cell" data-level="' + lvl(c) + '" title="' + title + '"></div>';
+            cur.setDate(cur.getDate() + 1);
         }
 
-        return `
-            <div class="record-group contrib-card">
-                <h4>${label} Activity (Past Year)</h4>
-                <div class="contrib-scroll">
-                    <div class="contrib-inner">
-                        <div class="contrib-months">${monthsHtml}</div>
-                        <div class="contrib-body">
-                            <div class="contrib-daylabels">
-                                <span style="top:11px;">Mon</span>
-                                <span style="top:39px;">Wed</span>
-                                <span style="top:67px;">Fri</span>
-                            </div>
-                            <div class="contrib-graph">${cellsHtml}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="contrib-footer">
-                    <span class="contrib-total">${totalCount} ${label.toLowerCase()} entr${totalCount === 1 ? 'y' : 'ies'} in the last year</span>
-                    <span class="contrib-legend">Less <span class="contrib-cell contrib-level-0"></span><span class="contrib-cell contrib-level-1"></span><span class="contrib-cell contrib-level-2"></span><span class="contrib-cell contrib-level-3"></span><span class="contrib-cell contrib-level-4"></span> More</span>
-                </div>
-            </div>
-        `;
+        const monthsHtml = monthCols.map(function (mc) {
+            return '<span style="grid-column-start:' + mc.col + ';">' + mc.label + '</span>';
+        }).join('');
+        const wk = '<div class="hm-weekdays"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>';
+        const legend = '<div class="hm-legend">Less <div class="hm-cell" data-level="0"></div><div class="hm-cell" data-level="1"></div><div class="hm-cell" data-level="2"></div><div class="hm-cell" data-level="3"></div><div class="hm-cell" data-level="4"></div> More</div>';
+
+        return '<div class="hm-block">' +
+            '<div class="hm-title">' + label + ' <span class="hm-sub">last 12 months &middot; ' + total + ' total</span></div>' +
+            '<div class="hm-wrap"><div class="hm-months">' + monthsHtml + '</div>' +
+            '<div class="hm-body">' + wk + '<div class="hm-grid">' + cells + '</div></div></div>' +
+            legend + '</div>';
     }
 
     function renderHistory(data, containerId, isCareCard) {
@@ -458,7 +709,7 @@
         const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if(sortedData.length === 0) {
-            container.innerHTML = `<p style="color: #888; text-align: center; font-style: italic;">No records found.</p>`;
+            container.innerHTML = `<p style="color: var(--text-3); text-align: center; font-style: italic;">No records found.</p>`;
             return;
         }
 
@@ -490,9 +741,9 @@
                     badgeClass = 'status-followup';
                 } else if(item.status === 'Rejected') {
                     badgeClass = 'status-rejected';
-                    cardClasses = 'history-card rejected'; 
-                    onClickAction = `onclick="toggleRejectionReason('reason-${index}')"`;
-                    tapPrompt = `<div style="font-size: 10px; color: var(--alert-red); margin-top: 4px; font-style: italic;">(Tap for details)</div>`;
+                    cardClasses = 'history-card rejected';
+                    onClickAction = `role="button" tabindex="0" aria-expanded="false" aria-controls="reason-${index}" onclick="toggleRejectionReason('reason-${index}', this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleRejectionReason('reason-${index}', this);}"`;
+                    tapPrompt = `<div style="font-size: 10px; color: var(--alert-red); margin-top: 4px; font-style: italic;">(Select for details)</div>`;
                     extraHtml = `
                         <div id="reason-${index}" class="rejection-details">
                             <strong>Reason for Rejection:</strong><br>
@@ -503,17 +754,17 @@
                     badgeClass = 'status-closed';
                 }
 
-                const companyHtml = item.staffType === 'Contractor' && item.company ? `<span style="font-size: 12px; color: #999;">Company: ${item.company}</span>` : '';
+                const companyHtml = item.staffType === 'Contractor' && item.company ? `<span style="font-size: 12px; color: var(--text-3);">Company: ${item.company}</span>` : '';
 
                 html += `
                 <div class="${cardClasses}" ${onClickAction}>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-weight: bold; color: white;">${item.type}</span>
-                        <span style="color: #aaa; font-size: 12px;">${item.dateStr} (${item.day})</span>
+                        <span style="font-weight: bold; color: var(--text-white);">${item.type}</span>
+                        <span style="color: var(--text-3); font-size: 12px;">${item.dateStr} (${item.day})</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 12px; color: #ccc;">Location: ${item.location}</span>
+                            <span style="font-size: 12px; color: var(--text-2);">Location: ${item.location}</span>
                             ${companyHtml}
                             ${tapPrompt}
                         </div>
@@ -528,10 +779,10 @@
                 html += `
                 <div class="history-card walkabout">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-weight: bold; color: white;">Walkabout</span>
-                        <span style="color: #aaa; font-size: 12px;">${item.dateStr} (${item.day})</span>
+                        <span style="font-weight: bold; color: var(--text-white);">Walkabout</span>
+                        <span style="color: var(--text-3); font-size: 12px;">${item.dateStr} (${item.day})</span>
                     </div>
-                    ${locHtml ? `<div style="font-size: 12px; color: #ccc;">Location: ${locHtml}</div>` : ''}
+                    ${locHtml ? `<div style="font-size: 12px; color: var(--text-2);">Location: ${locHtml}</div>` : ''}
                 </div>`;
             }
         });
@@ -546,6 +797,7 @@
         document.getElementById('dashboard-page').classList.add('hidden');
         document.getElementById('walkabout-page').classList.add('hidden');
         document.getElementById('care-page').classList.add('hidden');
+        setActiveNav(page);
 
         if(page === 'dashboard') {
             document.getElementById('dashboard-page').classList.remove('hidden');
@@ -553,9 +805,9 @@
             updateClock();
             clockInterval = setInterval(updateClock, 1000);
             const id = document.getElementById('idInput').value.toUpperCase();
-            
+
             document.getElementById('userTag').innerText = "Account ID: " + id;
-            const stripped = stripPrefix(id);
+            const stripped = stripPrefix(id) || (/^\d+$/.test(id) ? id : null);
             const breInfo = stripped && brePersonnel[stripped];
             const conInfo = stripped && getConInfo(stripped);
             const firstRecord = mockCareData.find(c => c.bfiNumber.toUpperCase() === id || c.employee.toUpperCase() === id);
@@ -564,25 +816,25 @@
             if (breInfo) {
                 const pos = `${breInfo.position}${breInfo.company ? ' - ' + breInfo.company : ''}`;
                 displayExtra = breInfo.email
-                    ? `<span style="font-size:12px;color:#bbb;">${breInfo.email}</span><br><span style="font-size:13px;color:#999;font-weight:normal;">${pos}</span>`
-                    : `<span style="font-size:13px;color:#999;font-weight:normal;">${pos}</span>`;
+                    ? `<span style="font-size:12px;color:var(--text-2);">${breInfo.email}</span><br><span style="font-size:13px;color:var(--text-3);font-weight:normal;">${pos}</span>`
+                    : `<span style="font-size:13px;color:var(--text-3);font-weight:normal;">${pos}</span>`;
             } else if (conInfo) {
                 const pos = `${conInfo.position}${conInfo.company ? ' - ' + conInfo.company : ''}`;
-                displayExtra = `<span style="font-size:13px;color:#999;font-weight:normal;">${pos}</span>`;
+                displayExtra = `<span style="font-size:13px;color:var(--text-3);font-weight:normal;">${pos}</span>`;
             } else if (firstRecord) {
-                displayExtra = `<span style="font-size:13px;color:#999;font-weight:normal;">${firstRecord.company ? firstRecord.position + ' - ' + firstRecord.company : firstRecord.position}</span>`;
+                displayExtra = `<span style="font-size:13px;color:var(--text-3);font-weight:normal;">${firstRecord.company ? firstRecord.position + ' - ' + firstRecord.company : firstRecord.position}</span>`;
             }
-            document.getElementById('welcomeText').innerHTML = `Welcome<br><span style="font-size:18px;color:#fff;">${displayName}</span>${displayExtra ? `<br>${displayExtra}` : ''}`;
-            
+            document.getElementById('welcomeText').innerHTML = `Welcome<br><span style="font-size:18px;color:var(--text-white);">${displayName}</span>${displayExtra ? `<br>${displayExtra}` : ''}`;
+
             const recordsContent = document.getElementById('recordsContent');
             const exportContent = document.getElementById('exportContent');
-            
+
             const userData = filterCareData(loggedInId);
-            
+
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
-            
+
             const monthRecords = userData.filter(c => {
                 const d = new Date(c.date);
                 return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
@@ -591,10 +843,10 @@
                 const d = new Date(c.date);
                 return d.getFullYear() === currentYear;
             });
-            
+
             const sortedByDate = [...userData].sort((a, b) => new Date(b.date) - new Date(a.date));
             const last = sortedByDate[0] || { type: '-', dateStr: '-', day: '-' };
-            
+
             const careHtml = `
                 <div class="record-group">
                     <h4>CARE Cards</h4>
@@ -604,7 +856,7 @@
                     <div class="record-item"><span class="record-label">Last Submission</span> <span class="record-value">${last.type}<small>${last.dateStr}, ${last.day}</small></span></div>
                 </div>
             `;
-            
+
             const userWalkData = filterWalkData(loggedInId);
             const walkMonthRecords = userWalkData.filter(c => {
                 const d = new Date(c.date);
@@ -639,17 +891,17 @@
                     </div>
                 `;
                 document.getElementById('walkBtn').classList.remove('hidden');
+                document.getElementById('navWalkabout').classList.remove('hidden');
             } else {
                 recordsContent.innerHTML = careHtml;
                 exportContent.innerHTML = `
                     <button class="export-btn" onclick="exportPDF('care')">Export CARE Cards Only (PDF)</button>
                 `;
                 document.getElementById('walkBtn').classList.add('hidden');
+                document.getElementById('navWalkabout').classList.add('hidden');
             }
 
-            document.getElementById('contribution-container').innerHTML =
-                renderContributionGraph(userData, 'CARE Card') +
-                (isContractor ? '' : renderContributionGraph(userWalkData, 'Walkabout'));
+            renderActivityHeatmaps(userData, userWalkData, isContractor);
         } else if (page === 'walkabout') {
             const userWalkData = filterWalkData(loggedInId);
             const filterVal = (document.getElementById('walkaboutFilter').value || '').toLowerCase();
@@ -663,10 +915,16 @@
             ) : userWalkData;
             renderHistory(filtered, 'walkabout-history-list', false);
             document.getElementById('walkabout-page').classList.remove('hidden');
-            
+
         } else if (page === 'care') {
-            document.getElementById('care-submit').classList.add('hidden');
-            
+            // Only collapse the submission form on fresh navigation to the CARE page,
+            // not on every filter keystroke (which also routes through showPage('care')).
+            if (document.getElementById('care-page').classList.contains('hidden')) {
+                document.getElementById('care-submit').classList.add('hidden');
+                const submitBtn = document.querySelector('[aria-controls="care-submit"]');
+                if (submitBtn) submitBtn.setAttribute('aria-expanded', 'false');
+            }
+
             const userData = filterCareData(loggedInId);
             const filterVal = (document.getElementById('careFilter').value || '').toLowerCase();
             const filtered = filterVal ? userData.filter(r =>
@@ -677,7 +935,7 @@
                 (r.purpose && r.purpose.toLowerCase().includes(filterVal)) ||
                 (r.status && r.status.toLowerCase().includes(filterVal))
             ) : userData;
-            
+
             // Generate Care Stats
             const total = userData.length;
             const closed = userData.filter(c => c.status === 'Closed').length;
@@ -686,7 +944,7 @@
             const rejected = userData.filter(c => c.status === 'Rejected').length;
 
             document.getElementById('care-stats-container').innerHTML = `
-                <div class="stat-box" style="border-top: 3px solid var(--bfi-gold); margin-bottom: 10px; padding: 15px; background: #2A2A2A;">
+                <div class="stat-box" style="border-top: 3px solid var(--bfi-gold); margin-bottom: 10px; padding: 15px; background: var(--surface-2);">
                     <div class="stat-num" style="font-size: 26px; color: var(--bfi-gold);">${total}</div>
                     <div class="stat-label" style="font-size: 12px; font-weight: bold;">Total CARE Cards Submitted</div>
                 </div>
@@ -745,6 +1003,7 @@
         const conName = conKey && getConInfo(conKey)?.name?.toUpperCase();
         return mockWalkaboutData.filter(c =>
             c.bfiNumber.toUpperCase() === upperId ||
+            c.employee.toUpperCase() === upperId ||
             (stripped && (c.bfiNumber === stripped || c.bfiNumber === id.replace(/^(C|BRE)0*/i, ''))) ||
             (conName && c.employee.toUpperCase() === conName)
         );
@@ -757,7 +1016,7 @@
 
     function exportPDF(type) {
         const id = loggedInId;
-        const stripped = stripPrefix(id);
+        const stripped = stripPrefix(id) || (/^\d+$/.test(id) ? id : null);
         const breInfo = stripped && brePersonnel[stripped];
         const conInfo = stripped && getConInfo(stripped);
         const firstRecord = mockCareData.find(c => c.bfiNumber.toUpperCase() === id || c.employee.toUpperCase() === id);
@@ -830,6 +1089,8 @@
             printArea.style.display = 'none';
         }, 200);
     }
+
+    renderReleaseNotes();
 </script>
 </body>
 </html>
