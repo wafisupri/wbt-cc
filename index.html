@@ -760,40 +760,40 @@
                     extraHtml = `
                         <div id="reason-${index}" class="rejection-details">
                             <strong>Reason for Rejection:</strong><br>
-                            ${item.reason}
+                            ${escapeHtml(item.reason)}
                         </div>
                     `;
                 } else {
                     badgeClass = 'status-closed';
                 }
 
-                const companyHtml = item.staffType === 'Contractor' && item.company ? `<span style="font-size: 12px; color: var(--text-3);">Company: ${item.company}</span>` : '';
+                const companyHtml = item.staffType === 'Contractor' && item.company ? `<span style="font-size: 12px; color: var(--text-3);">Company: ${escapeHtml(item.company)}</span>` : '';
 
                 html += `
                 <div class="${cardClasses}" ${onClickAction}>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-weight: bold; color: var(--text-white);">${item.type}</span>
-                        <span style="color: var(--text-3); font-size: 12px;">${item.dateStr} (${item.day})</span>
+                        <span style="font-weight: bold; color: var(--text-white);">${escapeHtml(item.type)}</span>
+                        <span style="color: var(--text-3); font-size: 12px;">${escapeHtml(item.dateStr)} (${escapeHtml(item.day)})</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 12px; color: var(--text-2);">Location: ${item.location}</span>
+                            <span style="font-size: 12px; color: var(--text-2);">Location: ${escapeHtml(item.location)}</span>
                             ${companyHtml}
                             ${tapPrompt}
                         </div>
-                        <span class="status-badge ${badgeClass}">${item.status}</span>
+                        <span class="status-badge ${badgeClass}">${escapeHtml(item.status)}</span>
                     </div>
                     ${extraHtml}
                 </div>`;
             } else {
-                const loc = item.location || '';
-                const sLoc = item.specificLocation || '';
+                const loc = escapeHtml(item.location || '');
+                const sLoc = escapeHtml(item.specificLocation || '');
                 const locHtml = sLoc ? `${loc} - ${sLoc}` : loc;
                 html += `
                 <div class="history-card walkabout">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                         <span style="font-weight: bold; color: var(--text-white);">Walkabout</span>
-                        <span style="color: var(--text-3); font-size: 12px;">${item.dateStr} (${item.day})</span>
+                        <span style="color: var(--text-3); font-size: 12px;">${escapeHtml(item.dateStr)} (${escapeHtml(item.day)})</span>
                     </div>
                     ${locHtml ? `<div style="font-size: 12px; color: var(--text-2);">Location: ${locHtml}</div>` : ''}
                 </div>`;
@@ -827,17 +827,17 @@
             const displayName = breInfo ? breInfo.name : (conInfo ? conInfo.name : (firstRecord && firstRecord.employee !== '[List]' ? firstRecord.employee : id));
             let displayExtra = '';
             if (breInfo) {
-                const pos = `${breInfo.position}${breInfo.company ? ' - ' + breInfo.company : ''}`;
+                const pos = `${escapeHtml(breInfo.position)}${breInfo.company ? ' - ' + escapeHtml(breInfo.company) : ''}`;
                 displayExtra = breInfo.email
-                    ? `<span style="font-size:12px;color:var(--text-2);">${breInfo.email}</span><br><span style="font-size:13px;color:var(--text-3);font-weight:normal;">${pos}</span>`
+                    ? `<span style="font-size:12px;color:var(--text-2);">${escapeHtml(breInfo.email)}</span><br><span style="font-size:13px;color:var(--text-3);font-weight:normal;">${pos}</span>`
                     : `<span style="font-size:13px;color:var(--text-3);font-weight:normal;">${pos}</span>`;
             } else if (conInfo) {
-                const pos = `${conInfo.position}${conInfo.company ? ' - ' + conInfo.company : ''}`;
+                const pos = `${escapeHtml(conInfo.position)}${conInfo.company ? ' - ' + escapeHtml(conInfo.company) : ''}`;
                 displayExtra = `<span style="font-size:13px;color:var(--text-3);font-weight:normal;">${pos}</span>`;
             } else if (firstRecord) {
-                displayExtra = `<span style="font-size:13px;color:var(--text-3);font-weight:normal;">${firstRecord.company ? firstRecord.position + ' - ' + firstRecord.company : firstRecord.position}</span>`;
+                displayExtra = `<span style="font-size:13px;color:var(--text-3);font-weight:normal;">${firstRecord.company ? escapeHtml(firstRecord.position) + ' - ' + escapeHtml(firstRecord.company) : escapeHtml(firstRecord.position)}</span>`;
             }
-            document.getElementById('welcomeText').innerHTML = `Welcome<br><span style="font-size:18px;color:var(--text-white);">${displayName}</span>${displayExtra ? `<br>${displayExtra}` : ''}`;
+            document.getElementById('welcomeText').innerHTML = `Welcome<br><span style="font-size:18px;color:var(--text-white);">${escapeHtml(displayName)}</span>${displayExtra ? `<br>${displayExtra}` : ''}`;
 
             const recordsContent = document.getElementById('recordsContent');
             const exportContent = document.getElementById('exportContent');
@@ -866,7 +866,7 @@
                     <div class="record-item"><span class="record-label">Total Submitted (All Time Records)</span> <span class="record-value">${userData.length}</span></div>
                     <div class="record-item"><span class="record-label">Sub-Total for the Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${monthRecords.length}</span></div>
                     <div class="record-item"><span class="record-label">Total for the Year (${currentYear})</span> <span class="record-value">${yearRecords.length >= 12 ? `${yearRecords.length} / 12 <span class="met">&#9679; Met</span>` : `${yearRecords.length} / 12`}</span></div>
-                    <div class="record-item"><span class="record-label">Last Submission</span> <span class="record-value">${last.type}<small>${last.dateStr}, ${last.day}</small></span></div>
+                    <div class="record-item"><span class="record-label">Last Submission</span> <span class="record-value">${escapeHtml(last.type)}<small>${escapeHtml(last.dateStr)}, ${escapeHtml(last.day)}</small></span></div>
                 </div>
             `;
 
@@ -888,7 +888,7 @@
                     <div class="record-item"><span class="record-label">Total Joined (All Time Records)</span> <span class="record-value">${userWalkData.length}</span></div>
                     <div class="record-item"><span class="record-label">Sub-Total for the Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${walkMonthRecords.length}</span></div>
                     <div class="record-item"><span class="record-label">Total for the Year (${currentYear})</span> <span class="record-value">${walkYearRecords.length >= 12 ? `${walkYearRecords.length} / 12 <span class="met">&#9679; Met</span>` : `${walkYearRecords.length} / 12`}</span></div>
-                    <div class="record-item"><span class="record-label">Last Joined</span> <span class="record-value">${walkLast.dateStr}, ${walkLast.day}</span></div>
+                    <div class="record-item"><span class="record-label">Last Joined</span> <span class="record-value">${escapeHtml(walkLast.dateStr)}, ${escapeHtml(walkLast.day)}</span></div>
                 </div>
             `;
 
