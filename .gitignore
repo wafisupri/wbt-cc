@@ -3,3 +3,23 @@
 
 # Local backups / scratch
 *.bak
+
+# Local working/reference files (not for the repo)
+/work-reference/
+/work-reference.md
+/generate-data.ps1
+/Data to Lookup.md
+/Generate Data for BFI OSS Portal.md
+
+# Source data spreadsheets (contain personnel/operational data)
+/CARE Card Database by Syarqawi - BRE & RIMC.xlsx
+/CARE Cards & Walkabout Statistics (Automatic).xlsx
+/CARE Cards - BRE, Contractors, Third Parties.xlsx
+/BFI Online Care Card Form for Contractors & Third Parties (June 2024).xlsx
+/BFI Online Care Card Form for Contractors & Third Parties - 01.xlsx
+/BFI CARE Card System (v1.1) - Dump.xlsx
+/BFI Record Safety Walkabout 2025.xlsx
+/BRE Personnel Details (as of 27082025) V1.xlsx
+/C Personnel Details V1.xlsx
+/Untitled form (Responses).xlsx
+/Data & File Retrieval for CARE Card & Walkabout.xlsx
