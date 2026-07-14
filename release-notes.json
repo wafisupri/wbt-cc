@@ -1,8 +1,18 @@
-﻿{
-    "version":  "7.2",
-    "date":  "13/07/2026",
-    "generated":  "13/07/2026 18:02",
-    "careCards":  15779,
-    "walkabouts":  2348,
-    "summary":  "CARE Card \u0026 Walkabout data refreshed: 15779 CARE cards (3929 staff, 11850 contractor) and 2348 walkabout records."
-}
+﻿[
+    {
+        "version":  "7.2.2",
+        "date":  "14/07/2026",
+        "generated":  "14/07/2026 16:49",
+        "careCards":  15837,
+        "walkabouts":  2446,
+        "summary":  "CARE Card \u0026 Walkabout data refreshed: 15837 CARE cards (3929 staff, 11869 contractor, 39 business-partner) \u0026 2446 walkabout records."
+    },
+    {
+        "version":  "7.2.1",
+        "date":  "14/07/2026",
+        "generated":  "14/07/2026 14:46",
+        "careCards":  15798,
+        "walkabouts":  2446,
+        "summary":  "CARE Card \u0026 Walkabout data refreshed: 15798 CARE cards (3929 staff, 11869 contractor) \u0026 2446 walkabout records."
+    }
+]

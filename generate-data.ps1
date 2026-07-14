@@ -1,11 +1,13 @@
 param(
     [string]$StaffExcel = "$PSScriptRoot\BFI CARE Card System (v1.1) - Dump.xlsx",
     [string]$ContractorExcel = "$PSScriptRoot\BFI Online Care Card Form for Contractors & Third Parties (June 2024).xlsx",
-    [string]$ContractorExcel2 = "$PSScriptRoot\BFI Online Care Card Form for Contractors & Third Parties - 01.xlsx",
+    [string]$ContractorExcel2 = "$PSScriptRoot\CARE Cards - BRE, Contractors, Third Parties.xlsx",
+    [string]$PartnerExcel = "$PSScriptRoot\CARE Card Database by Syarqawi - BRE & RIMC.xlsx",
     [string]$WalkaboutExcel = "$PSScriptRoot\BFI Record Safety Walkabout 2025.xlsx",
+    [string]$WalkaboutFormExcel = "$PSScriptRoot\Untitled form (Responses).xlsx",
     [string]$BREExcel = "$PSScriptRoot\BRE Personnel Details (as of 27082025) V1.xlsx",
     [string]$CExcel = "$PSScriptRoot\C Personnel Details V1.xlsx",
-    [string]$StatisticsExcel = "$PSScriptRoot\Carecards & walkabout statistics (automatic).xlsx",
+    [string]$StatisticsExcel = "$PSScriptRoot\CARE Cards & Walkabout Statistics (Automatic).xlsx",
     [string]$OutputDir = "$PSScriptRoot"
 )
 
@@ -82,7 +84,7 @@ $stream.WriteLine("const mockCareData = [")
 
 $total = $staffData.Count + $contractorData.Count + $contractorData2.Count
 $count = 0
-$staffWritten = 0; $conWritten = 0; $con2Written = 0; $walkWritten = 0
+$staffWritten = 0; $conWritten = 0; $con2Written = 0; $walkWritten = 0; $partnerWritten = 0
 $breCount = 0; $conKeyCount = 0
 
 function Sanitize($val) {
@@ -208,6 +210,48 @@ if ($hasContractor2) {
     }
 }
 
+# Process BRE & RIMC business-partner CARE cards (separate DB; IDs are numeric, staffType = BRE Staff)
+if (Test-Path $PartnerExcel) {
+    Write-Host "Reading BRE & RIMC business-partner CARE cards..." -ForegroundColor Green
+    foreach ($sheet in @("BRE Care Card Responses", "RIMC Care Card Responses")) {
+        $pData = $null
+        try { $pData = Import-Excel $PartnerExcel -WorksheetName $sheet } catch { $pData = $null }
+        if (-not $pData) { Write-Host "  $sheet : (empty/unreadable, skipped)" -ForegroundColor Yellow; continue }
+        $ps = 0
+        foreach ($row in $pData) {
+            try { $d = ParseExcelDate (Get-Col $row '^Date of Intervention') } catch { continue }
+            if ($null -eq $d) { continue }
+            $dateStr = $d.ToString("dd/MM/yyyy"); $day = $d.ToString("dddd"); $isoDate = $d.ToString("yyyy-MM-dd")
+
+            # ID priority: BRE Employee No. -> Rotary IMC Employee No. -> BFI Intern No. (old alphanumeric BFI id)
+            $pidRaw = Get-Col $row '^BRE Employee No'
+            if ($null -eq $pidRaw -or "$pidRaw" -eq "") { $pidRaw = Get-Col $row 'Rotary IMC Employee No' }
+            if ($null -eq $pidRaw -or "$pidRaw" -eq "") { $pidRaw = Get-Col $row 'BFI Intern No' }
+            if ($pidRaw -is [double] -or $pidRaw -is [decimal]) { $pidStr = ([long][math]::Round([double]$pidRaw)).ToString() }
+            elseif ($pidRaw -is [int] -or $pidRaw -is [long]) { $pidStr = $pidRaw.ToString() }
+            else { $pidStr = "$pidRaw".Trim() }
+            $pidStr = Sanitize $pidStr
+
+            $pName    = Sanitize (Get-Col $row '^Full Name')
+            $pCompany = Sanitize (Get-Col $row 'Company')
+            $pPos     = Sanitize (Get-Col $row '^Position')
+            $pLoc     = Sanitize (Get-Col $row 'Location of Interventions')
+            $pPurpose = Sanitize (Get-Col $row 'Purpose of Care Card')
+            $pObs     = Sanitize (Get-Col $row 'What have you Observed')
+            $pRisk    = Sanitize (Get-Col $row 'What can go wrong')
+            $pAction  = Sanitize (Get-Col $row 'What have you done')
+            $pCat     = Sanitize (Get-Col $row 'Category of this Care Card')
+
+            $line = "    { date: '$isoDate', dateStr: '$dateStr', day: '$day', type: '$pCat', location: '$pLoc', status: 'Closed', bfiNumber: '$pidStr', staffType: 'BRE Staff', employee: '$pName', position: '$pPos', company: '$pCompany', purpose: '$pPurpose', observation: '$pObs', risk: '$pRisk', action: '$pAction' },"
+            $stream.WriteLine($line)
+            $count++; $partnerWritten++; $ps++
+        }
+        Write-Host "  $sheet : $ps records" -ForegroundColor Gray
+    }
+} else {
+    Write-Host "WARNING: BRE/RIMC file not found: $PartnerExcel (skipping)" -ForegroundColor Yellow
+}
+
 $stream.WriteLine("];")
 
 # --- BRE Personnel Lookup ---
@@ -298,14 +342,15 @@ if (Test-Path $cLookupFile) {
     $stream.WriteLine("const contractorPersonnel = {};")
 }
 
-# --- Walkabout Data ---
+# --- Walkabout Data (SharePoint list export + Google Form attendance responses) ---
+$stream.WriteLine("")
+$stream.WriteLine("const mockWalkaboutData = [")
+
+# Source 1: BFI Record Safety Walkabout 2025.xlsx (SharePoint list export)
 if (Test-Path $WalkaboutExcel) {
-    Write-Host "Reading walkabout data..." -ForegroundColor Green
+    Write-Host "Reading walkabout data (list export)..." -ForegroundColor Green
     $walkData = Import-Excel $WalkaboutExcel
     Write-Host "  Found: $($walkData.Count) records" -ForegroundColor Gray
-
-    $stream.WriteLine("")
-    $stream.WriteLine("const mockWalkaboutData = [")
 
     $wIdx = 0
     foreach ($row in $walkData) {
@@ -334,12 +379,44 @@ if (Test-Path $WalkaboutExcel) {
         $count++; $walkWritten++
         if ($wIdx % 200 -eq 0) { Write-Progress -PercentComplete 100 -Status "Walkabout: $wIdx" -Activity "Generating" }
     }
-    $stream.WriteLine("];")
 } else {
     Write-Host "WARNING: Walkabout file not found: $WalkaboutExcel (skipping)" -ForegroundColor Yellow
-    $stream.WriteLine("")
-    $stream.WriteLine("const mockWalkaboutData = [];")
 }
+
+# Source 2: Untitled form (Responses).xlsx (Google Form walkabout-attendance responses)
+if (Test-Path $WalkaboutFormExcel) {
+    Write-Host "Reading walkabout data (Google Form responses)..." -ForegroundColor Green
+    try { $walkForm = Import-Excel $WalkaboutFormExcel -WorksheetName "Form responses 1" }
+    catch { $walkForm = Import-Excel $WalkaboutFormExcel }
+    Write-Host "  Found: $($walkForm.Count) records" -ForegroundColor Gray
+
+    foreach ($row in $walkForm) {
+        # Columns: Timestamp, Date, Name (first and last), ID (BFI/EXP/BRE/INT/IR),
+        # Department, Section, Area (= location), Specific Location, Email address.
+        try {
+            $d = ParseExcelDate (Get-Col $row '^Date$')
+        } catch { continue }
+        if ($null -eq $d) { continue }
+        $dateStr = $d.ToString("dd/MM/yyyy")
+        $day = $d.ToString("dddd")
+        $isoDate = $d.ToString("yyyy-MM-dd")
+
+        $wBfi = Sanitize (Get-Col $row '^ID')
+        $wName = Sanitize (Get-Col $row '^Name')
+        $wDept = Sanitize (Get-Col $row '^Department$')
+        $wSection = Sanitize (Get-Col $row '^Section$')
+        $wLoc = Sanitize (Get-Col $row '^Area$')
+        $wSpec = Sanitize (Get-Col $row 'Specific Location')
+
+        $line = "    { date: '$isoDate', dateStr: '$dateStr', day: '$day', bfiNumber: '$wBfi', employee: '$wName', position: '', department: '$wDept', section: '$wSection', location: '$wLoc', specificLocation: '$wSpec' },"
+        $stream.WriteLine($line)
+        $count++; $walkWritten++
+    }
+} else {
+    Write-Host "WARNING: Walkabout form file not found: $WalkaboutFormExcel (skipping)" -ForegroundColor Yellow
+}
+
+$stream.WriteLine("];")
 
 # --- Statistics Data ---
 if (Test-Path $StatisticsExcel) {
@@ -357,15 +434,30 @@ if (Test-Path $StatisticsExcel) {
     $stream.WriteLine("const careStats = {};")
 }
 
-# --- Data version + release notes (naming: month.week, e.g. 7.2 = July, week 2) ---
+# --- Data version + release notes (naming: month.week.upload, e.g. 7.2.3 = July, week 2, upload 3) ---
 Write-Host "Writing version metadata + release notes..." -ForegroundColor Green
 $now = Get-Date
 $verWeek = [int][math]::Ceiling($now.Day / 7.0)
-$version = "$($now.Month).$verWeek"
+$monthWeek = "$($now.Month).$verWeek"
 $genStr = $now.ToString('dd/MM/yyyy HH:mm')
 $dateStr = $now.ToString('dd/MM/yyyy')
-$careTotal = $staffWritten + $conWritten + $con2Written
+$careTotal = $staffWritten + $conWritten + $con2Written + $partnerWritten
 $conTotal = $conWritten + $con2Written
+
+# Read existing changelog first so the upload number can be sequenced within this month.week
+$rnFile = Join-Path $OutputDir "release-notes.json"
+$rnList = @()
+if (Test-Path $rnFile) {
+    try { $rnList = @(Get-Content $rnFile -Raw -Encoding UTF8 | ConvertFrom-Json) } catch { $rnList = @() }
+}
+# upload = next sequence number among existing "<month>.<week>.<n>" versions this week
+$uploadRe = "^" + [regex]::Escape($monthWeek) + "\.(\d+)$"
+$maxUpload = 0
+foreach ($e in $rnList) {
+    if ($e.version -and ($e.version -match $uploadRe) -and ([int]$Matches[1] -gt $maxUpload)) { $maxUpload = [int]$Matches[1] }
+}
+$upload = $maxUpload + 1
+$version = "$monthWeek.$upload"
 
 $stream.WriteLine("")
 $stream.WriteLine("const dataMeta = {")
@@ -376,17 +468,12 @@ $stream.WriteLine("  careCards: $careTotal,")
 $stream.WriteLine("  walkabouts: $walkWritten,")
 $stream.WriteLine("  staffCare: $staffWritten,")
 $stream.WriteLine("  contractorCare: $conTotal,")
+$stream.WriteLine("  businessPartnerCare: $partnerWritten,")
 $stream.WriteLine("  brePersonnel: $breCount,")
 $stream.WriteLine("  contractorPersonnel: $conKeyCount")
 $stream.WriteLine("};")
 
-# Release-notes changelog persisted across runs in release-notes.json
-$rnFile = Join-Path $OutputDir "release-notes.json"
-$rnList = @()
-if (Test-Path $rnFile) {
-    try { $rnList = @(Get-Content $rnFile -Raw -Encoding UTF8 | ConvertFrom-Json) } catch { $rnList = @() }
-}
-$summary = "CARE Card & Walkabout data refreshed: $careTotal CARE cards ($staffWritten staff, $conTotal contractor) and $walkWritten walkabout records."
+$summary = "CARE Card & Walkabout data refreshed: $careTotal CARE cards ($staffWritten staff, $conTotal contractor, $partnerWritten business-partner) & $walkWritten walkabout records."
 $newEntry = [PSCustomObject]@{
     version    = $version
     date       = $dateStr
@@ -395,11 +482,8 @@ $newEntry = [PSCustomObject]@{
     walkabouts = $walkWritten
     summary    = $summary
 }
-if ($rnList.Count -gt 0 -and $rnList[0].version -eq $version) {
-    $rnList[0] = $newEntry            # same month.week -> update the current entry
-} else {
-    $rnList = @($newEntry) + $rnList  # new week -> prepend
-}
+# Each upload is a distinct version, so always prepend; keep the 12 most recent
+$rnList = @($newEntry) + $rnList
 if ($rnList.Count -gt 12) { $rnList = $rnList[0..11] }
 ($rnList | ConvertTo-Json -Depth 3) | Out-File $rnFile -Encoding UTF8
 

@@ -1,0 +1,5 @@
+# Excel lock / temporary files
+~$*
+
+# Local backups / scratch
+*.bak

@@ -112,9 +112,9 @@
         .header-text h1 { font-size: 20px; font-weight: 700; color: var(--text-white); letter-spacing: -0.3px; margin: 0; }
         .header-text p { font-size: 11px; color: var(--text-3); margin: 2px 0 0; }
         .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        .theme-toggle { background: none; border: 1px solid var(--border-2); border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--text-3); cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+        .theme-toggle { box-sizing: border-box; height: 30px; width: auto; margin: 0; line-height: 1; background: none; border: 1px solid var(--border-2); border-radius: 20px; padding: 0 12px; font-size: 12px; font-weight: 600; color: var(--text-3); cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
         .theme-toggle:hover { border-color: var(--text-3); color: var(--text-white); }
-        .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--green-tint); color: var(--bfi-green); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--green-tint-border); white-space: nowrap; }
+        .badge { box-sizing: border-box; height: 30px; line-height: 1; display: inline-flex; align-items: center; gap: 6px; background: var(--green-tint); color: var(--bfi-green); font-size: 11px; font-weight: 600; padding: 0 12px; border-radius: 20px; border: 1px solid var(--green-tint-border); white-space: nowrap; }
         .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--bfi-green); }
         .app-nav { max-width: 1000px; margin: 0 auto; padding: 0 20px; display: flex; gap: 2px; border-top: 1px solid var(--border-1); overflow-x: auto; scrollbar-width: none; }
         .app-nav::-webkit-scrollbar { display: none; }
@@ -151,6 +151,8 @@
         .record-label { color: var(--text-2); padding-right: 10px; }
         .record-value { font-weight: bold; text-align: right; }
         .record-value small { display: block; font-weight: normal; color: var(--text-3); font-size: 12px; margin-top: 2px; }
+        .met { display: inline-block; color: var(--bfi-green); font-weight: 700; background: var(--green-tint); border: 1px solid var(--green-tint-border); padding: 1px 8px; border-radius: 10px; animation: metPulse 1.3s ease-in-out infinite; }
+        @keyframes metPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
         .stats-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
         .stat-box { flex: 1; min-width: 65px; background: var(--surface-2); padding: 10px 5px; text-align: center; border-radius: 4px; border: 1px solid var(--border-1); }
@@ -286,18 +288,26 @@
 
         /* Print / PDF Export (always paper-styled, independent of theme) */
         @media print {
+            /* Force a white page + black text so mobile/tablet don't print the dark theme (all-black page) */
+            html, body { background: #ffffff !important; }
+            body { color: #000000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .site-header, .site-footer, .scroll-top, .app-nav { display: none !important; }
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; box-sizing: border-box; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; box-sizing: border-box; background: #ffffff !important; color: #000000 !important; }
             .print-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #D4AF37; padding-bottom: 10px; }
-            .print-header h1 { color: #D4AF37; margin: 0; font-size: 22px; }
+            .print-header h1 { color: #B8860B; margin: 0; font-size: 22px; }
             .print-header p { margin: 4px 0; font-size: 12px; color: #333; }
-            .print-table { width: 100%; border-collapse: collapse; font-size: 11px; page-break-inside: auto; }
-            .print-table th { background: #D4AF37; color: black; padding: 6px 4px; text-align: left; font-size: 10px; }
+            .print-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
+            .print-table thead { display: table-header-group; }
+            .print-table th { background: #D4AF37 !important; color: #000 !important; padding: 6px 4px; text-align: left; font-size: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .print-table td { padding: 4px; border-bottom: 1px solid #ccc; vertical-align: top; color: #000; }
             .print-table tr { page-break-inside: avoid; }
-            .print-section-title { color: #2E7D32; font-size: 16px; margin: 20px 0 8px 0; border-bottom: 1px solid #2E7D32; padding-bottom: 4px; }
+            .print-section-title { background: #2E7D32 !important; color: #ffffff !important; font-size: 21px; font-weight: 800; margin: 22px 0 12px; padding: 10px 14px; border-radius: 4px; letter-spacing: 0.3px; page-break-after: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .print-footer { text-align: center; font-size: 10px; color: #999; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }
+            .break-after { page-break-after: always; break-after: page; }
+            .break-before { page-break-before: always; break-before: page; }
+            .print-end { text-align: center; font-weight: bold; color: #2E7D32; font-size: 13px; margin: 16px 0 8px; padding-top: 10px; border-top: 2px solid #2E7D32; letter-spacing: 0.5px; }
             .no-print { display: none !important; }
         }
     </style>
@@ -336,9 +346,10 @@
     <div id="auth-view">
         <div class="card">
             <h2 style="text-align: center;">Sign In</h2>
-            <input type="text" id="idInput" aria-label="Enter your ID or full name" aria-describedby="idHelp" placeholder="Enter ID or full name (e.g., BFI001, EXP005, BRE12000073, C12000073)" onkeydown="if(event.key==='Enter')performLogin()">
-            <div id="idHelp" style="font-size:11px;color:var(--text-3);margin:-5px 0 10px 0;text-align:center;line-height:1.6;">
-                BFI (local staff) 001&ndash;388 &nbsp;|&nbsp; EXP (expat staff) 005&ndash;197 &nbsp;|&nbsp; BRE (business partner) 1&ndash;120000080 &nbsp;|&nbsp; C (contractor) 1&ndash;120000080 or full name
+            <input type="text" id="idInput" aria-label="Enter your ID or full name" aria-describedby="idHelp" placeholder="Enter ID or Full Name" onkeydown="if(event.key==='Enter')performLogin()">
+            <div id="idHelp" style="font-size:11px;color:var(--text-3);margin:-5px 0 10px 0;text-align:center;line-height:1.6;overflow-wrap:anywhere;">
+                <div><strong style="color:var(--text-2);">Enter ID</strong> (e.g., BFI001, EXP005, C003, INT001, IR001, or BRE/RIMC no. 12000073)</div>
+                <div style="margin-top:4px;"><strong style="color:var(--text-2);">Enter Full Name</strong> (as filled in, in the CARE Card submission form)</div>
             </div>
             <p id="loginError" role="alert" class="hidden" style="color: var(--alert-red); font-size: 13px; margin-top: -5px; margin-bottom: 10px;"></p>
             <button onclick="performLogin()">Sign In</button>
@@ -348,7 +359,7 @@
         <div class="card">
             <div class="rn-panel">
                 <h3>Release Notes &amp; Data Status</h3>
-                <p class="rn-sub">Versions are named <strong>month.week</strong> (e.g. Version 7.2 = July, week&nbsp;2). Check the latest upload below to know whether your most recent submissions are already included.</p>
+                <p class="rn-sub">Versions are named <strong>month.week.upload</strong> (e.g. Version 7.2.3 = July, week&nbsp;2, upload&nbsp;3).<br>Check the latest upload below to know whether your most recent submissions are already included.</p>
                 <div class="rn-latest" id="rnLatest"></div>
                 <div class="rn" id="rnList"></div>
             </div>
@@ -363,9 +374,9 @@
             <div id="clockDisplay" style="font-size: 13px; color: var(--text-3); margin-bottom: 15px;"></div>
 
             <div style="background:var(--surface-2); padding:15px; border-radius:6px; border-left:4px solid var(--bfi-gold); margin-bottom:20px;">
-                <h3 style="font-size:14px; margin-bottom:8px;">About This Portal</h3>
-                <p style="font-size:12px; color:var(--text-2); line-height:1.6; margin:0 0 6px 0;">The <strong style="color:var(--bfi-gold);">BFI Occupational Safety &amp; Security (OSS) Portal</strong> is a centralized platform for managing and tracking workplace safety records.</p>
-                <p style="font-size:12px; color:var(--text-2); line-height:1.6; margin:0 0 6px 0;">Employees log in with their BFI/EXP/BRE ID to view their <strong style="color:var(--bfi-gold);">CARE Card</strong> submissions and <strong style="color:var(--bfi-gold);">Daily Walkabout</strong> records.</p>
+                <h3 style="font-size:14px; margin-bottom:8px;">About BFI Occupational Safety &amp; Security (OSS) Portal</h3>
+                <p style="font-size:12px; color:var(--text-2); line-height:1.6; margin:0 0 6px 0;">This <strong style="color:var(--bfi-gold);">OSS Portal</strong> is a centralised platform for managing &amp; tracking workplace safety records.</p>
+                <p style="font-size:12px; color:var(--text-2); line-height:1.6; margin:0 0 6px 0;">Employees log in with their BFI/EXP/BRE ID to view their <strong style="color:var(--bfi-gold);">CARE Card</strong> submissions &amp; <strong style="color:var(--bfi-gold);">Daily Walkabout</strong> records.</p>
                 <p style="font-size:12px; color:var(--text-3); line-height:1.6; margin:0; font-style:italic;">All dates in DD/MM/YYYY &middot; All times in 24-hour HH:MM</p>
             </div>
 
@@ -413,7 +424,7 @@
             <!-- Submission Form (official BFI CARE Card form, embedded) -->
             <div id="care-submit" class="hidden" style="background: var(--surface-2); padding: 15px; border-radius: 8px; border: 1px solid var(--border-2); margin-bottom: 20px;">
                 <h3 style="margin-bottom: 10px; font-size: 16px;">New CARE Card Submission</h3>
-                <p class="embed-note">This is the official BFI Online CARE Card form. Submissions are saved to the OSS database and will appear in your records after the next data upload (see the version on the sign-in page).</p>
+                <p class="embed-note">This is the official BFI Online CARE Card Form.<br>Submissions are saved to the OSS database &amp; will appear in your records after the next data upload (see the version on the sign-in page).</p>
                 <a class="nav-btn" href="https://bruneifertilizer.sharepoint.com/sites/MicrosoftPowerTools/_layouts/15/listforms.aspx?cid=MzM1ODA4ODMtNDM1OC00NWYyLThjMWMtNWVhMzkxZjk5Mjg5&amp;nav=NjQ1ZmU4ODUtZTc0My00ZTFlLTk3MGUtYTBjODc2ZjE1MGY1" target="_blank" rel="noopener">Open official SharePoint form (staff sign-in) &#8599;</a>
                 <p class="embed-note" style="margin-top:12px;">Or complete it here (Google Forms &mdash; works for all staff, no sign-in needed):</p>
                 <div class="form-embed-wrap">
@@ -499,10 +510,10 @@
         if (latest) {
             if (meta) {
                 latest.innerHTML =
-                    '<div><span class="lbl">Latest data upload</span></div>' +
+                    '<div><span class="lbl">Latest Data Upload</span></div>' +
                     '<div style="margin-top:5px;"><span class="val">Version ' + meta.version + '</span> &middot; uploaded ' + (meta.date || '') + '</div>' +
                     '<div style="margin-top:6px;color:var(--text-2);">' + Number(meta.careCards).toLocaleString() + ' CARE cards &middot; ' + Number(meta.walkabouts).toLocaleString() + ' walkabout records</div>' +
-                    '<div style="margin-top:6px;font-size:11px;color:var(--text-3);">Submitted something after this date? It will appear in the next upload.</div>';
+                    '<div style="margin-top:6px;font-size:11px;color:var(--text-3);">Submitted something after this date?<br>It will appear in the next upload.</div>';
             } else {
                 latest.innerHTML =
                     '<div><span class="val">Version ' + ver + '</span></div>' +
@@ -513,7 +524,7 @@
         const list = document.getElementById('rnList');
         if (list) {
             if (!notes.length) {
-                list.innerHTML = '<div class="rn-entry"><div class="rn-head"><span class="rn-ver">Version ' + ver + '</span><span class="rn-current">Current</span></div><ul class="rn-list"><li>Portal data initialized.</li></ul></div>';
+                list.innerHTML = '<div class="rn-entry"><div class="rn-head"><span class="rn-ver">Version ' + ver + '</span><span class="rn-current">Current</span></div><ul class="rn-list"><li>Portal data initialised.</li></ul></div>';
             } else {
                 list.innerHTML = notes.map(function (n, i) {
                     return '<div class="rn-entry">' +
@@ -522,7 +533,7 @@
                             '<span class="rn-date">' + (n.date || '') + '</span>' +
                             (i === 0 ? '<span class="rn-current">Current</span>' : '') +
                         '</div>' +
-                        '<ul class="rn-list"><li>' + (n.summary ? escapeHtml(n.summary) : '') + '</li></ul>' +
+                        '<ul class="rn-list"><li>' + (n.summary ? escapeHtml(n.summary).replace(/:\s+/, ':<br>') : '') + '</li></ul>' +
                     '</div>';
                 }).join('');
             }
@@ -544,7 +555,9 @@
 
     function performLogin() {
         const rawInput = document.getElementById('idInput').value.trim();
-        const rawId = rawInput.toUpperCase();
+        const nameKey = rawInput.toUpperCase();                    // spaces kept for full-name matching
+        const rawId = rawInput.replace(/\s+/g, '').toUpperCase();  // spaces stripped so "BFI 031" == "BFI031"
+        const digits = rawInput.replace(/\s+/g, '');               // spaces stripped for numeric BRE/RIMC ids
         const idPattern = /^(BFI|BRE|EXP|INT|IR|C)(\d+)$/;
         const match = rawId.match(idPattern);
         const errorMsg = document.getElementById('loginError');
@@ -560,11 +573,11 @@
         }
 
         // Strategy 2: Pure digits (BRE number, or C/BRE without prefix)
-        if (!found && /^\d+$/.test(rawInput)) {
-            loginKey = rawInput;
-            found = mockCareData.some(c => c.bfiNumber === rawInput) ||
-                    mockWalkaboutData.some(c => c.bfiNumber === rawInput) ||
-                    brePersonnel[rawInput] !== undefined;
+        if (!found && /^\d+$/.test(digits)) {
+            loginKey = digits;
+            found = mockCareData.some(c => c.bfiNumber === digits) ||
+                    mockWalkaboutData.some(c => c.bfiNumber === digits) ||
+                    brePersonnel[digits] !== undefined;
         }
 
         // Strategy 3: Prefix-stripped match (BRE/C — stored as bare digits in data)
@@ -588,8 +601,8 @@
         // Strategy 4: Full name lookup
         if (!found && rawInput.length > 0) {
             loginKey = rawInput;
-            found = mockCareData.some(c => c.employee.toUpperCase() === rawId) ||
-                    mockWalkaboutData.some(c => c.employee.toUpperCase() === rawId);
+            found = mockCareData.some(c => c.employee.toUpperCase() === nameKey) ||
+                    mockWalkaboutData.some(c => c.employee.toUpperCase() === nameKey);
         }
 
         if (found) {
@@ -804,7 +817,7 @@
             if (clockInterval) clearInterval(clockInterval);
             updateClock();
             clockInterval = setInterval(updateClock, 1000);
-            const id = document.getElementById('idInput').value.toUpperCase();
+            const id = loggedInId.toUpperCase();
 
             document.getElementById('userTag').innerText = "Account ID: " + id;
             const stripped = stripPrefix(id) || (/^\d+$/.test(id) ? id : null);
@@ -851,8 +864,8 @@
                 <div class="record-group">
                     <h4>CARE Cards</h4>
                     <div class="record-item"><span class="record-label">Total Submitted (All Time Records)</span> <span class="record-value">${userData.length}</span></div>
-                    <div class="record-item"><span class="record-label">Sub-Total For The Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${monthRecords.length}</span></div>
-                    <div class="record-item"><span class="record-label">Total For The Year (${currentYear})</span> <span class="record-value">${yearRecords.length >= 12 ? `<span style="color:var(--bfi-gold);font-weight:bold;">${yearRecords.length} / 12 &#9679; Met</span>` : `${yearRecords.length} / 12`}</span></div>
+                    <div class="record-item"><span class="record-label">Sub-Total for the Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${monthRecords.length}</span></div>
+                    <div class="record-item"><span class="record-label">Total for the Year (${currentYear})</span> <span class="record-value">${yearRecords.length >= 12 ? `${yearRecords.length} / 12 <span class="met">&#9679; Met</span>` : `${yearRecords.length} / 12`}</span></div>
                     <div class="record-item"><span class="record-label">Last Submission</span> <span class="record-value">${last.type}<small>${last.dateStr}, ${last.day}</small></span></div>
                 </div>
             `;
@@ -873,8 +886,8 @@
                 <div class="record-group">
                     <h4>Walkabouts</h4>
                     <div class="record-item"><span class="record-label">Total Joined (All Time Records)</span> <span class="record-value">${userWalkData.length}</span></div>
-                    <div class="record-item"><span class="record-label">Sub-Total For The Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${walkMonthRecords.length}</span></div>
-                    <div class="record-item"><span class="record-label">Total For The Year (${currentYear})</span> <span class="record-value">${walkYearRecords.length >= 12 ? `<span style="color:var(--bfi-gold);font-weight:bold;">${walkYearRecords.length} / 12 &#9679; Met</span>` : `${walkYearRecords.length} / 12`}</span></div>
+                    <div class="record-item"><span class="record-label">Sub-Total for the Month (${now.toLocaleString('default', { month: 'long' })})</span> <span class="record-value">${walkMonthRecords.length}</span></div>
+                    <div class="record-item"><span class="record-label">Total for the Year (${currentYear})</span> <span class="record-value">${walkYearRecords.length >= 12 ? `${walkYearRecords.length} / 12 <span class="met">&#9679; Met</span>` : `${walkYearRecords.length} / 12`}</span></div>
                     <div class="record-item"><span class="record-label">Last Joined</span> <span class="record-value">${walkLast.dateStr}, ${walkLast.day}</span></div>
                 </div>
             `;
@@ -889,6 +902,10 @@
                         <button class="export-btn" style="margin-top: 0; flex: 1;" onclick="exportPDF('care')">Export CARE Cards</button>
                         <button class="export-btn" style="margin-top: 0; flex: 1;" onclick="exportPDF('walkabout')">Export Walkabouts</button>
                     </div>
+                    <div style="font-size:11px; color:var(--text-3); line-height:1.6; margin-top:10px;">
+                        <div><strong style="color:var(--text-2);">CARE Card export</strong> shows: Date, Day, Type, Location, Purpose, Observation &amp; Action.</div>
+                        <div style="margin-top:3px;"><strong style="color:var(--text-2);">Walkabout export</strong> shows: Date, Day, Location, Specific Location, Department &amp; Section.</div>
+                    </div>
                 `;
                 document.getElementById('walkBtn').classList.remove('hidden');
                 document.getElementById('navWalkabout').classList.remove('hidden');
@@ -896,6 +913,9 @@
                 recordsContent.innerHTML = careHtml;
                 exportContent.innerHTML = `
                     <button class="export-btn" onclick="exportPDF('care')">Export CARE Cards Only (PDF)</button>
+                    <div style="font-size:11px; color:var(--text-3); line-height:1.6; margin-top:10px;">
+                        <strong style="color:var(--text-2);">CARE Card export</strong> shows: Date, Day, Type, Location, Purpose, Observation &amp; Action.
+                    </div>
                 `;
                 document.getElementById('walkBtn').classList.add('hidden');
                 document.getElementById('navWalkabout').classList.add('hidden');
@@ -1032,53 +1052,48 @@
             <p>Account: ${escapeHtml(id)} &mdash; Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'})}</p>
         </div>`;
 
+        // Column headers + per-row renderers (columns match the on-screen export note)
+        const careHeader = '<tr><th>Date</th><th>Day</th><th>Type</th><th>Location</th><th>Purpose</th><th>Observation</th><th>Action</th></tr>';
+        const walkHeader = '<tr><th>Date</th><th>Day</th><th>Location</th><th>Specific Location</th><th>Department</th><th>Section</th></tr>';
+        const careRow = r => `<tr><td>${escapeHtml(r.dateStr)}</td><td>${escapeHtml(r.day)}</td><td>${escapeHtml(r.type)}</td><td>${escapeHtml(r.location)}</td><td>${escapeHtml(r.purpose)}</td><td>${escapeHtml(r.observation)}</td><td>${escapeHtml(r.action)}</td></tr>`;
+        const walkRow = r => `<tr><td>${escapeHtml(r.dateStr)}</td><td>${escapeHtml(r.day)}</td><td>${escapeHtml(r.location)}</td><td>${escapeHtml(r.specificLocation)}</td><td>${escapeHtml(r.department)}</td><td>${escapeHtml(r.section)}</td></tr>`;
+
+        // One table per `chunkSize` records, so a page break falls after each chunk and
+        // the column header (thead) repeats at the top of every page.
+        function chunkTables(rows, headerRow, rowFn, chunkSize) {
+            let out = '';
+            for (let i = 0; i < rows.length; i += chunkSize) {
+                const isLast = i + chunkSize >= rows.length;
+                out += '<table class="print-table' + (isLast ? '' : ' break-after') + '"><thead>' + headerRow + '</thead><tbody>' +
+                    rows.slice(i, i + chunkSize).map(rowFn).join('') + '</tbody></table>';
+            }
+            return out;
+        }
+
         if (type === 'both' || type === 'care') {
-            html += `<h2 class="print-section-title">CARE Cards (${careData.length})</h2>`;
+            html += `<h2 class="print-section-title">CARE Card Records (${careData.length})</h2>`;
             if (careData.length === 0) {
                 html += `<p style="font-size:12px;color:#999;">No CARE Card records found.</p>`;
             } else {
-                html += `<table class="print-table"><thead><tr>
-                    <th>Date</th><th>Day</th><th>Type</th><th>Location</th><th>Purpose</th><th>Observation</th><th>Action</th>
-                </tr></thead><tbody>`;
                 const sorted = [...careData].sort((a, b) => new Date(b.date) - new Date(a.date));
-                for (const r of sorted) {
-                    html += `<tr>
-                        <td>${escapeHtml(r.dateStr)}</td>
-                        <td>${escapeHtml(r.day)}</td>
-                        <td>${escapeHtml(r.type)}</td>
-                        <td>${escapeHtml(r.location)}</td>
-                        <td>${escapeHtml(r.purpose)}</td>
-                        <td>${escapeHtml(r.observation)}</td>
-                        <td>${escapeHtml(r.action)}</td>
-                    </tr>`;
-                }
-                html += `</tbody></table>`;
+                html += chunkTables(sorted, careHeader, careRow, 3);   // 3 CARE records per page
             }
+            html += `<div class="print-end">&mdash;&nbsp; End of CARE Card Records &nbsp;&mdash;</div>`;
         }
 
         if (type === 'both' || type === 'walkabout') {
-            html += `<h2 class="print-section-title">Daily Walkabouts (${walkData.length})</h2>`;
+            // When it follows the CARE section, start Daily Walkabouts on a fresh page
+            html += '<div' + (type === 'both' ? ' class="break-before"' : '') + '>';
+            html += `<h2 class="print-section-title">Daily Walkabout Records (${walkData.length})</h2>`;
             if (walkData.length === 0) {
                 html += `<p style="font-size:12px;color:#999;">No Walkabout records found.</p>`;
             } else {
-                html += `<table class="print-table"><thead><tr>
-                    <th>Date</th><th>Day</th><th>Location</th><th>Specific Location</th><th>Department</th><th>Section</th>
-                </tr></thead><tbody>`;
                 const sorted = [...walkData].sort((a, b) => new Date(b.date) - new Date(a.date));
-                for (const r of sorted) {
-                    html += `<tr>
-                        <td>${escapeHtml(r.dateStr)}</td>
-                        <td>${escapeHtml(r.day)}</td>
-                        <td>${escapeHtml(r.location)}</td>
-                        <td>${escapeHtml(r.specificLocation)}</td>
-                        <td>${escapeHtml(r.department)}</td>
-                        <td>${escapeHtml(r.section)}</td>
-                    </tr>`;
-                }
-                html += `</tbody></table>`;
+                html += chunkTables(sorted, walkHeader, walkRow, 10);  // 10 walkabout records per page
             }
+            html += `<div class="print-end">&mdash;&nbsp; End of Walkabout Records &nbsp;&mdash;</div>`;
+            html += '</div>';
         }
-
         html += `<div class="print-footer">BFI Occupational Safety &amp; Security (OSS) Portal &mdash; All dates in DD/MM/YYYY &middot; All times in 24-hour HH:MM</div>`;
 
         const printArea = document.getElementById('printArea');
