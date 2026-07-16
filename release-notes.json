@@ -1,18 +1,30 @@
 ﻿[
     {
-        "version":  "7.2.2",
-        "date":  "14/07/2026",
-        "generated":  "14/07/2026 16:49",
-        "careCards":  15837,
+        "version":  "7.3.1",
+        "date":  "16/07/2026",
+        "generated":  "16/07/2026 17:29",
+        "careCards":  15850,
         "walkabouts":  2446,
-        "summary":  "CARE Card \u0026 Walkabout data refreshed: 15837 CARE cards (3929 staff, 11869 contractor, 39 business-partner) \u0026 2446 walkabout records."
+        "summary":  "CARE Card \u0026 Walkabout data refreshed: 15850 CARE cards (3929 staff, 11878 contractor, 43 business-partner) \u0026 2446 walkabout records."
     },
     {
-        "version":  "7.2.1",
-        "date":  "14/07/2026",
-        "generated":  "14/07/2026 14:46",
-        "careCards":  15798,
-        "walkabouts":  2446,
-        "summary":  "CARE Card \u0026 Walkabout data refreshed: 15798 CARE cards (3929 staff, 11869 contractor) \u0026 2446 walkabout records."
+        "value":  [
+                      {
+                          "version":  "7.3.1",
+                          "date":  "16/07/2026",
+                          "generated":  "16/07/2026 17:21",
+                          "careCards":  15850,
+                          "walkabouts":  2446,
+                          "summary":  "CARE Card \u0026 Walkabout data refreshed: 15850 CARE cards (3929 staff, 11878 contractor, 43 business-partner) \u0026 2446 walkabout records."
+                      },
+                      {
+                          "value":  [
+                                        "@{version=7.3.1; date=16/07/2026; generated=16/07/2026 17:16; careCards=15848; walkabouts=2446; summary=CARE Card \u0026 Walkabout data refreshed: 15848 CARE cards (3929 staff, 11878 contractor, 41 business-partner) \u0026 2446 walkabout records.}",
+                                        "@{value=System.Object[]; Count=2}"
+                                    ],
+                          "Count":  2
+                      }
+                  ],
+        "Count":  2
     }
 ]
